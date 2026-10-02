@@ -1,6 +1,5 @@
 package com.example.ads
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,12 +17,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.OpenInNew
-import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,8 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,16 +40,26 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import kotlinx.coroutines.delay
 
 @Composable
 fun AdBannerView(
     modifier: Modifier = Modifier,
     showFallbackIfFailed: Boolean = true
 ) {
-    val context = LocalContext.current
+    val isEmulator = remember { AdMobManager.isRunningOnEmulator() }
     var isAdLoaded by remember { mutableStateOf(false) }
-    var hasFailed by remember { mutableStateOf(false) }
+    var hasFailed by remember { mutableStateOf(isEmulator) }
+    var readyToLoadAdView by remember { mutableStateOf(false) }
     val adUnitId = remember { AdMobManager.getBannerAdUnitId() }
+
+    // If on a physical device, wait until initial screen render is complete before inflating AdView
+    LaunchedEffect(Unit) {
+        if (!isEmulator) {
+            delay(1500)
+            readyToLoadAdView = true
+        }
+    }
 
     Box(
         modifier = modifier
@@ -61,7 +67,8 @@ fun AdBannerView(
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (!hasFailed) {
+        // Only attempt to mount native AdView on real devices after initial UI paint
+        if (!hasFailed && readyToLoadAdView && !isEmulator) {
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -90,11 +97,11 @@ fun AdBannerView(
                             }
                             try {
                                 loadAd(AdRequest.Builder().build())
-                            } catch (e: Throwable) {
+                            } catch (_: Throwable) {
                                 hasFailed = true
                             }
                         }
-                    } catch (e: Throwable) {
+                    } catch (_: Throwable) {
                         hasFailed = true
                         android.widget.FrameLayout(ctx)
                     }
@@ -102,10 +109,13 @@ fun AdBannerView(
             )
         }
 
-        // Elegant Business Sponsor Banner Fallback (when ad is loading or awaiting AdMob 1-hour activation)
-        if (hasFailed && showFallbackIfFailed) {
+        // Fast, beautiful business sponsor banner fallback (loads in 0ms, never blocks the UI)
+        if ((hasFailed || isEmulator || !readyToLoadAdView) && showFallbackIfFailed) {
             AdFallbackCard(
-                onClick = { AdMobManager.recordClick() }
+                onClick = {
+                    AdMobManager.recordClick()
+                    AdMobManager.recordBannerImpression()
+                }
             )
         }
     }

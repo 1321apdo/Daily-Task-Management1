@@ -8,10 +8,13 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import com.example.ads.AdMobManager
 import com.example.ui.BusinessViewModel
 import com.example.ui.MainScreen
 import com.example.ui.theme.MyApplicationTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -32,11 +35,14 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Preload Interstitial Ad safely after first frame renders
-        window.decorView.post {
+        // Delay interstitial preloading so the initial user interface opens instantly with 0 freeze
+        lifecycleScope.launch {
             try {
-                AdMobManager.loadInterstitialAd(this)
-            } catch (e: Throwable) {
+                delay(3000)
+                if (!AdMobManager.isRunningOnEmulator()) {
+                    AdMobManager.loadInterstitialAd(this@MainActivity)
+                }
+            } catch (_: Throwable) {
                 // Ignore safe ad loading error
             }
         }

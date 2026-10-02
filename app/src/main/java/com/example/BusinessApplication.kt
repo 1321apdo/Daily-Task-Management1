@@ -1,30 +1,44 @@
 package com.example
 
 import android.app.Application
+import android.os.Build
+import android.webkit.WebView
+import com.example.ads.AdMobManager
 import com.example.data.local.AppDatabase
 import com.example.data.repository.BusinessRepository
+import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import com.google.android.gms.ads.RequestConfiguration
 
 class BusinessApplication : Application() {
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
     val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
     val repository: BusinessRepository by lazy { BusinessRepository(database.businessDao()) }
 
     override fun onCreate() {
         super.onCreate()
-        // Initialize Google Mobile Ads asynchronously
-        applicationScope.launch(Dispatchers.IO) {
-            try {
-                MobileAds.initialize(this@BusinessApplication) {}
-            } catch (e: Throwable) {
-                // Graceful fallback if Play Services or Ads SDK has an issue
-                e.printStackTrace()
+
+        // Safely configure WebView for multi-process isolation on Android P+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val currentProcessName = Application.getProcessName()
+                if (packageName != currentProcessName) {
+                    WebView.setDataDirectorySuffix(currentProcessName)
+                }
             }
+        } catch (_: Throwable) {}
+
+        // Initialize Google Mobile Ads safely on real devices without blocking UI
+        try {
+            val requestConfig = RequestConfiguration.Builder()
+                .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
+                .build()
+            MobileAds.setRequestConfiguration(requestConfig)
+
+            if (!AdMobManager.isRunningOnEmulator()) {
+                MobileAds.initialize(this) {}
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
     }
 }
