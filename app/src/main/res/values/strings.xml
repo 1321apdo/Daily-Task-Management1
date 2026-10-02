@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">إدارة الأعمال والمهام</string>
+    <string name="nav_dashboard">الرئيسية</string>
+    <string name="nav_tasks">المهام</string>
+    <string name="nav_appointments">المواعيد</string>
+    <string name="nav_finance">الأرباح والمالية</string>
+    <string name="nav_monetization">إعلانات AdMob</string>
+    
+    <string name="admob_test_mode_notice">إعلانات تجريبية مفعلة - جاهز للربط بحسابك</string>
+
+    <!-- Google Services identifiers to satisfy Firebase Analytics / App Measurement -->
+    <string name="google_app_id" translatable="false">1:148594802387:android:a8b0c38bf3894a1d</string>
+    <string name="gcm_defaultSenderId" translatable="false">148594802387</string>
+    <string name="default_web_client_id" translatable="false">148594802387.apps.googleusercontent.com</string>
+    <string name="firebase_database_url" translatable="false">https://ais-applet.firebaseio.com</string>
+    <string name="google_api_key" translatable="false">AIzaSyPlaceholderForMeasurement</string>
+    <string name="project_id" translatable="false">ais-applet</string>
+</resources>

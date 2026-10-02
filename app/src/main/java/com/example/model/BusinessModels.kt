@@ -1,0 +1,75 @@
+package com.example.model
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+enum class Priority(val titleAr: String, val level: Int) {
+    LOW("منخفض", 1),
+    MEDIUM("متوسط", 2),
+    HIGH("مهم", 3),
+    URGENT("عاجل جداً", 4)
+}
+
+enum class TaskStatus(val titleAr: String) {
+    PENDING("قيد الانتظار"),
+    IN_PROGRESS("جاري العمل"),
+    COMPLETED("مكتمل")
+}
+
+@Entity(tableName = "tasks")
+data class TaskItem(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val title: String,
+    val description: String = "",
+    val priority: Priority = Priority.MEDIUM,
+    val status: TaskStatus = TaskStatus.PENDING,
+    val dueDate: Long = System.currentTimeMillis() + 86400000L,
+    val clientOrProject: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+enum class AppointmentType(val titleAr: String) {
+    IN_PERSON("اجتماع حضوري"),
+    VIDEO_CALL("مكالمة فيديو"),
+    PHONE_CALL("مكالمة هاتفية")
+}
+
+enum class AppointmentStatus(val titleAr: String) {
+    SCHEDULED("مجدول"),
+    CONFIRMED("مؤكد"),
+    COMPLETED("تم بنجاح"),
+    CANCELLED("ملغي")
+}
+
+@Entity(tableName = "appointments")
+data class Appointment(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val title: String,
+    val clientName: String,
+    val dateTime: Long = System.currentTimeMillis() + 86400000L,
+    val durationMinutes: Int = 45,
+    val locationOrLink: String = "",
+    val type: AppointmentType = AppointmentType.VIDEO_CALL,
+    val status: AppointmentStatus = AppointmentStatus.SCHEDULED,
+    val notes: String = "",
+    val dealValue: Double = 0.0
+)
+
+enum class TransactionType(val titleAr: String) {
+    INCOME("إيراد / ربح"),
+    EXPENSE("مصروف / تكلفة")
+}
+
+@Entity(tableName = "finance_transactions")
+data class FinanceTransaction(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val title: String,
+    val amount: Double,
+    val type: TransactionType,
+    val category: String,
+    val date: Long = System.currentTimeMillis(),
+    val notes: String = ""
+)

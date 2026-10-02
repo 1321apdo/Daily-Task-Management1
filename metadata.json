@@ -1,0 +1,6 @@
+{
+  "name": "إدارة الأعمال والمهام",
+  "description": "تطبيق شامل لإدارة الأعمال والمشاريع وتنظيم المهام وجدولة المواعيد مع متابعة الأرباح والربط الإعلاني AdMob.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
