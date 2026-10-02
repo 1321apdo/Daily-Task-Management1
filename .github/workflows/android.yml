@@ -35,8 +35,8 @@ jobs:
         fi
         chmod +x gradlew
 
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug --stacktrace
+    - name: Build Debug APK (Force Build)
+      run: ./gradlew assembleDebug -Dorg.gradle.project.android.suppressVersionCheck=true --stacktrace
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
