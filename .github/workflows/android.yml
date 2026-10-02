@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -21,22 +22,23 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    - name: Setup Gradle System
+    - name: Setup Gradle System (9.3.1)
       uses: gradle/actions/setup-gradle@v4
       with:
-        gradle-version: 8.11.1
+        gradle-version: 9.3.1
 
-    - name: Force Fix Wrapper and Build APK
+    - name: Generate Wrapper and Build APK
       run: |
-        gradle wrapper --gradle-version 8.11.1
+        echo "=== إعداد مشغل Gradle 9.3.1 وبناء التطبيق ==="
+        gradle wrapper --gradle-version 9.3.1 --distribution-type bin
         chmod +x gradlew
-        ./gradlew clean
-        ./gradlew assembleDebug -Dorg.gradle.project.android.suppressVersionCheck=true --stacktrace --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug-apk
         path: |
-          **/build/outputs/apk/debug/*.apk
           app/build/outputs/apk/debug/*.apk
+          **/build/outputs/apk/debug/*.apk
+        retention-days: 14
