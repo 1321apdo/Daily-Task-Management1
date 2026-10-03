@@ -59,10 +59,15 @@ fun FinanceScreen(viewModel: BusinessViewModel) {
     val allTransactions by viewModel.allTransactions.collectAsStateWithLifecycle()
     val totalRevenue by viewModel.totalRevenue.collectAsStateWithLifecycle()
     val totalExpenses by viewModel.totalExpenses.collectAsStateWithLifecycle()
+    val privacySettings by viewModel.privacyManager.settings.collectAsStateWithLifecycle()
     val netProfit = totalRevenue - totalExpenses
 
     val currencyFormat = NumberFormat.getNumberInstance(Locale("ar", "SA")).apply {
         maximumFractionDigits = 2
+    }
+
+    fun formatAmount(amount: Double): String {
+        return if (privacySettings.isDiscreetMode) "•••• ر.س" else "${currencyFormat.format(amount)} ر.س"
     }
 
     Scaffold(
@@ -153,7 +158,7 @@ fun FinanceScreen(viewModel: BusinessViewModel) {
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "${currencyFormat.format(netProfit)} ر.س",
+                            text = formatAmount(netProfit),
                             color = if (netProfit >= 0) NeonEmerald else Color(0xFFFF5252),
                             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
                         )
@@ -173,7 +178,7 @@ fun FinanceScreen(viewModel: BusinessViewModel) {
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "إيرادات: ${currencyFormat.format(totalRevenue)} ر.س",
+                                    text = "إيرادات: ${formatAmount(totalRevenue)}",
                                     color = Color.White,
                                     fontSize = 12.sp
                                 )
@@ -188,7 +193,7 @@ fun FinanceScreen(viewModel: BusinessViewModel) {
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "مصروفات: ${currencyFormat.format(totalExpenses)} ر.س",
+                                    text = "مصروفات: ${formatAmount(totalExpenses)}",
                                     color = Color.White.copy(alpha = 0.9f),
                                     fontSize = 12.sp
                                 )
@@ -252,6 +257,7 @@ fun FinanceScreen(viewModel: BusinessViewModel) {
                     items(allTransactions, key = { it.id }) { item ->
                         GlowingTransactionListItem(
                             transaction = item,
+                            isDiscreetMode = privacySettings.isDiscreetMode,
                             onDelete = { viewModel.deleteTransaction(item) }
                         )
                     }
@@ -264,6 +270,7 @@ fun FinanceScreen(viewModel: BusinessViewModel) {
 @Composable
 private fun GlowingTransactionListItem(
     transaction: FinanceTransaction,
+    isDiscreetMode: Boolean,
     onDelete: () -> Unit
 ) {
     val isIncome = transaction.type == TransactionType.INCOME
@@ -325,7 +332,7 @@ private fun GlowingTransactionListItem(
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${if (isIncome) "+" else "-"}${currencyFormat.format(transaction.amount)} ر.س",
+                    text = if (isDiscreetMode) "•••• ر.س" else "${if (isIncome) "+" else "-"}${currencyFormat.format(transaction.amount)} ر.س",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = if (isIncome) NeonEmerald else Color(0xFFFF5252)

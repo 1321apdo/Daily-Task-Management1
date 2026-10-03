@@ -6,6 +6,7 @@ import android.webkit.WebView
 import com.example.ads.AdMobManager
 import com.example.data.local.AppDatabase
 import com.example.data.repository.BusinessRepository
+import com.example.security.PrivacyManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
@@ -13,6 +14,7 @@ import com.google.android.gms.ads.RequestConfiguration
 class BusinessApplication : Application() {
     val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
     val repository: BusinessRepository by lazy { BusinessRepository(database.businessDao()) }
+    val privacyManager: PrivacyManager by lazy { PrivacyManager.getInstance(this) }
 
     override fun onCreate() {
         super.onCreate()

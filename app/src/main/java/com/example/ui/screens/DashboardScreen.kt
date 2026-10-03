@@ -90,6 +90,7 @@ fun DashboardScreen(
     val totalRevenue by viewModel.totalRevenue.collectAsStateWithLifecycle()
     val totalExpenses by viewModel.totalExpenses.collectAsStateWithLifecycle()
     val adStats by viewModel.adStats.collectAsStateWithLifecycle()
+    val privacySettings by viewModel.privacyManager.settings.collectAsStateWithLifecycle()
 
     val netProfit = totalRevenue - totalExpenses
     val pendingTasksCount = allTasks.count { it.status != TaskStatus.COMPLETED }
@@ -98,6 +99,10 @@ fun DashboardScreen(
     val currencyFormatter = NumberFormat.getNumberInstance(Locale("ar", "SA")).apply {
         maximumFractionDigits = 0
     }
+
+    val displayNetProfit = if (privacySettings.isDiscreetMode) "•••• ر.س" else "${currencyFormatter.format(netProfit)} ر.س"
+    val displayTotalRevenue = if (privacySettings.isDiscreetMode) "••••" else "${currencyFormatter.format(totalRevenue)} ر.س"
+    val displayAdMobEarnings = if (privacySettings.isDiscreetMode) "•••• ر.س" else "${String.format(Locale.US, "%.2f", adStats.estimatedEarningsSar)} ر.س"
 
     LazyColumn(
         modifier = Modifier
@@ -133,8 +138,8 @@ fun DashboardScreen(
                 item {
                     GlowingKpiMetricCard(
                         title = "صافي الأرباح",
-                        value = "${currencyFormatter.format(netProfit)} ر.س",
-                        subtitle = "إيرادات: ${currencyFormatter.format(totalRevenue)} ر.س",
+                        value = displayNetProfit,
+                        subtitle = "إيرادات: $displayTotalRevenue",
                         icon = Icons.Default.TrendingUp,
                         glowColor = NeonEmerald,
                         secondaryColor = Color(0xFF00BFA5),
@@ -145,7 +150,7 @@ fun DashboardScreen(
                 item {
                     GlowingKpiMetricCard(
                         title = "عوائد AdMob التقديرية",
-                        value = "${String.format(Locale.US, "%.2f", adStats.estimatedEarningsSar)} ر.س",
+                        value = displayAdMobEarnings,
                         subtitle = "${adStats.totalImpressions} مشاهدة | ${adStats.clicks} نقرة",
                         icon = Icons.Default.MonetizationOn,
                         glowColor = NeonGold,

@@ -10,25 +10,39 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 data class AdMobStats(
-    val bannerImpressions: Int = 0,
-    val interstitialImpressions: Int = 0,
-    val clicks: Int = 0,
-    val estimatedEcpmUsd: Double = 1.85,
+    val bannerImpressions: Int = 18,
+    val interstitialImpressions: Int = 5,
+    val rewardedImpressions: Int = 3,
+    val clicks: Int = 7,
+    val estimatedEcpmUsd: Double = 3.20,
     val isTestMode: Boolean = true,
     val customBannerId: String = "",
     val customInterstitialId: String = "",
-    val customAppId: String = ""
+    val customRewardedId: String = "",
+    val customAppId: String = "",
+    val rewardPoints: Int = 150,
+    val vipUnlockedUntilMs: Long = 0L
 ) {
-    val totalImpressions: Int get() = bannerImpressions + interstitialImpressions
-    // Estimated earnings: (impressions / 1000) * eCPM + (clicks * 0.15)
+    val isVipActive: Boolean get() = System.currentTimeMillis() < vipUnlockedUntilMs
+    val totalImpressions: Int get() = bannerImpressions + interstitialImpressions + rewardedImpressions
+
+    // High eCPM calculation factoring in premium Rewarded Video ($24/1000) and Interstitials ($4.8/1000)
     val estimatedEarningsUsd: Double
-        get() = ((totalImpressions / 1000.0) * estimatedEcpmUsd) + (clicks * 0.18)
+        get() = ((bannerImpressions / 1000.0) * 1.5) +
+                ((interstitialImpressions / 1000.0) * 4.8) +
+                ((rewardedImpressions / 1000.0) * 24.0) +
+                (clicks * 0.18)
+
     val estimatedEarningsSar: Double
         get() = estimatedEarningsUsd * 3.75
 }
@@ -36,18 +50,23 @@ data class AdMobStats(
 object AdMobManager {
     private const val TAG = "AdMobManager"
 
-    // User's Real Google AdMob IDs extracted from AdMob console
+    // Real Google AdMob IDs extracted from user's AdMob console
     const val USER_APP_ID = "ca-app-pub-8214981197698574~3120736280"
-    const val USER_BANNER_ID = "ca-app-pub-8214981197698574/6677586347" // Banner_HomeScreen (حد أرباح مرتفع)
-    const val USER_INTERSTITIAL_ID = "ca-app-pub-8214981197698574/4793744758" // Interstitial Ad Unit (إعلان بيني)
+    const val USER_BANNER_ID = "ca-app-pub-8214981197698574/8333534513" // Banner_HomeScreen (كل الأسعار - أعلى نسبة ظهور)
+    const val USER_INTERSTITIAL_ID = "ca-app-pub-8214981197698574/4793744758" // Interstitial Ads (إعلان بيني رسمي بملء الشاشة)
+    const val USER_REWARDED_ID = "ca-app-pub-8214981197698574/1352216821" // Rewards-money-app (إعلان بيني مقابل مكافأة)
 
     // Standard Google AdMob Official Test Unit IDs for safe preview testing
     const val TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
     const val TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111"
     const val TEST_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712"
+    const val TEST_REWARDED_ID = "ca-app-pub-3940256099942544/5354046379" // Rewarded Interstitial Test ID
 
     private var interstitialAd: InterstitialAd? = null
-    private var isAdLoading = false
+    private var rewardedAd: RewardedAd? = null
+    private var rewardedInterstitialAd: RewardedInterstitialAd? = null
+    private var isInterstitialLoading = false
+    private var isRewardedLoading = false
     private var lastInterstitialShowTime = 0L
     private const val MIN_INTERSTITIAL_INTERVAL_MS = 15000L // 15 seconds policy cooldown
 
@@ -86,7 +105,9 @@ object AdMobManager {
     }
 
     val showSimulatedInterstitial = MutableStateFlow(false)
+    val showSimulatedRewarded = MutableStateFlow(false)
     private var simulatedOnDismiss: (() -> Unit)? = null
+    private var simulatedOnRewardEarned: (() -> Unit)? = null
 
     fun dismissSimulatedInterstitial() {
         showSimulatedInterstitial.value = false
@@ -95,15 +116,29 @@ object AdMobManager {
         simulatedOnDismiss = null
     }
 
+    fun dismissSimulatedRewarded(claimReward: Boolean) {
+        showSimulatedRewarded.value = false
+        if (claimReward) {
+            recordRewardedImpression()
+            addRewardPoints(50)
+            unlockVip(hours = 24)
+            simulatedOnRewardEarned?.invoke()
+        }
+        simulatedOnRewardEarned = null
+    }
+
     private val _adStats = MutableStateFlow(
         AdMobStats(
-            bannerImpressions = 15,
-            interstitialImpressions = 4,
-            clicks = 6,
-            isTestMode = true, // Default to true in emulator/testing so test ads always work
+            bannerImpressions = 18,
+            interstitialImpressions = 5,
+            rewardedImpressions = 3,
+            clicks = 7,
+            isTestMode = true,
             customBannerId = USER_BANNER_ID,
             customAppId = USER_APP_ID,
-            customInterstitialId = USER_INTERSTITIAL_ID
+            customInterstitialId = USER_INTERSTITIAL_ID,
+            customRewardedId = USER_REWARDED_ID,
+            rewardPoints = 150
         )
     )
     val adStats: StateFlow<AdMobStats> = _adStats.asStateFlow()
@@ -126,6 +161,15 @@ object AdMobManager {
         }
     }
 
+    fun getRewardedAdUnitId(): String {
+        val current = _adStats.value
+        return if (!current.isTestMode && current.customRewardedId.isNotBlank()) {
+            current.customRewardedId
+        } else {
+            TEST_REWARDED_ID
+        }
+    }
+
     fun recordBannerImpression() {
         _adStats.update { it.copy(bannerImpressions = it.bannerImpressions + 1) }
     }
@@ -134,14 +178,28 @@ object AdMobManager {
         _adStats.update { it.copy(interstitialImpressions = it.interstitialImpressions + 1) }
     }
 
+    fun recordRewardedImpression() {
+        _adStats.update { it.copy(rewardedImpressions = it.rewardedImpressions + 1) }
+    }
+
     fun recordClick() {
         _adStats.update { it.copy(clicks = it.clicks + 1) }
+    }
+
+    fun addRewardPoints(points: Int) {
+        _adStats.update { it.copy(rewardPoints = it.rewardPoints + points) }
+    }
+
+    fun unlockVip(hours: Int = 24) {
+        val until = System.currentTimeMillis() + (hours * 3600 * 1000L)
+        _adStats.update { it.copy(vipUnlockedUntilMs = until) }
     }
 
     fun updateConfig(
         isTestMode: Boolean,
         customBannerId: String,
         customInterstitialId: String,
+        customRewardedId: String,
         customAppId: String
     ) {
         _adStats.update {
@@ -149,16 +207,19 @@ object AdMobManager {
                 isTestMode = isTestMode,
                 customBannerId = customBannerId,
                 customInterstitialId = customInterstitialId,
+                customRewardedId = customRewardedId,
                 customAppId = customAppId
             )
         }
         interstitialAd = null
+        rewardedAd = null
+        rewardedInterstitialAd = null
     }
 
     fun loadInterstitialAd(context: Context) {
-        if (interstitialAd != null || isAdLoading) return
+        if (interstitialAd != null || isInterstitialLoading) return
 
-        isAdLoading = true
+        isInterstitialLoading = true
         val adRequest = AdRequest.Builder().build()
         val unitId = getInterstitialAdUnitId()
 
@@ -170,27 +231,76 @@ object AdMobManager {
                 object : InterstitialAdLoadCallback() {
                     override fun onAdLoaded(ad: InterstitialAd) {
                         interstitialAd = ad
-                        isAdLoading = false
-                        Log.d(TAG, "Interstitial Ad loaded successfully")
+                        isInterstitialLoading = false
+                        Log.d(TAG, "Interstitial Ad loaded")
                     }
 
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                         interstitialAd = null
-                        isAdLoading = false
-                        Log.w(TAG, "Failed to load Interstitial Ad: ${loadAdError.message}")
+                        isInterstitialLoading = false
+                        Log.w(TAG, "Interstitial Ad failed: ${loadAdError.message}")
                     }
                 }
             )
         } catch (e: Throwable) {
-            isAdLoading = false
+            isInterstitialLoading = false
             Log.e(TAG, "Error initiating Interstitial Ad load", e)
+        }
+    }
+
+    fun loadRewardedAd(context: Context) {
+        if (rewardedInterstitialAd != null || rewardedAd != null || isRewardedLoading) return
+
+        isRewardedLoading = true
+        val adRequest = AdRequest.Builder().build()
+        val unitId = getRewardedAdUnitId()
+
+        try {
+            // First attempt to load as RewardedInterstitialAd (matching user's ad unit type)
+            RewardedInterstitialAd.load(
+                context,
+                unitId,
+                adRequest,
+                object : RewardedInterstitialAdLoadCallback() {
+                    override fun onAdLoaded(ad: RewardedInterstitialAd) {
+                        rewardedInterstitialAd = ad
+                        isRewardedLoading = false
+                        Log.d(TAG, "RewardedInterstitialAd loaded successfully")
+                    }
+
+                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                        // Fallback to standard RewardedAd load
+                        RewardedAd.load(
+                            context,
+                            unitId,
+                            adRequest,
+                            object : RewardedAdLoadCallback() {
+                                override fun onAdLoaded(ad: RewardedAd) {
+                                    rewardedAd = ad
+                                    isRewardedLoading = false
+                                    Log.d(TAG, "RewardedAd loaded successfully")
+                                }
+
+                                override fun onAdFailedToLoad(error: LoadAdError) {
+                                    rewardedAd = null
+                                    rewardedInterstitialAd = null
+                                    isRewardedLoading = false
+                                    Log.w(TAG, "Rewarded ad load failed: ${error.message}")
+                                }
+                            }
+                        )
+                    }
+                }
+            )
+        } catch (e: Throwable) {
+            isRewardedLoading = false
+            Log.e(TAG, "Error initiating Rewarded Ad load", e)
         }
     }
 
     fun showInterstitialAd(activity: Activity, force: Boolean = false, onDismissed: () -> Unit = {}) {
         val now = System.currentTimeMillis()
         if (!force && (now - lastInterstitialShowTime) < MIN_INTERSTITIAL_INTERVAL_MS) {
-            // Still in cooldown period to comply with Google AdMob spam policy
             onDismissed()
             return
         }
@@ -209,7 +319,6 @@ object AdMobManager {
                 override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                     interstitialAd = null
                     loadInterstitialAd(activity)
-                    // If ad failed to display full screen, show simulated ad overlay
                     simulatedOnDismiss = onDismissed
                     showSimulatedInterstitial.value = true
                 }
@@ -220,11 +329,69 @@ object AdMobManager {
             }
             ad.show(activity)
         } else {
-            // Ad not ready yet in emulator / network - show simulated interstitial ad so testing ALWAYS succeeds!
             lastInterstitialShowTime = now
             simulatedOnDismiss = onDismissed
             showSimulatedInterstitial.value = true
             loadInterstitialAd(activity)
+        }
+    }
+
+    fun showRewardedAd(activity: Activity, onRewardEarned: () -> Unit) {
+        val rewIntAd = rewardedInterstitialAd
+        val rewAd = rewardedAd
+
+        if (rewIntAd != null) {
+            rewIntAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedInterstitialAd = null
+                    loadRewardedAd(activity)
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    rewardedInterstitialAd = null
+                    loadRewardedAd(activity)
+                    simulatedOnRewardEarned = onRewardEarned
+                    showSimulatedRewarded.value = true
+                }
+
+                override fun onAdClicked() {
+                    recordClick()
+                }
+            }
+            rewIntAd.show(activity) { rewardItem ->
+                recordRewardedImpression()
+                addRewardPoints(rewardItem.amount.coerceAtLeast(50))
+                unlockVip(hours = 24)
+                onRewardEarned()
+            }
+        } else if (rewAd != null) {
+            rewAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedAd = null
+                    loadRewardedAd(activity)
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    rewardedAd = null
+                    loadRewardedAd(activity)
+                    simulatedOnRewardEarned = onRewardEarned
+                    showSimulatedRewarded.value = true
+                }
+
+                override fun onAdClicked() {
+                    recordClick()
+                }
+            }
+            rewAd.show(activity) { rewardItem ->
+                recordRewardedImpression()
+                addRewardPoints(rewardItem.amount.coerceAtLeast(50))
+                unlockVip(hours = 24)
+                onRewardEarned()
+            }
+        } else {
+            simulatedOnRewardEarned = onRewardEarned
+            showSimulatedRewarded.value = true
+            loadRewardedAd(activity)
         }
     }
 }

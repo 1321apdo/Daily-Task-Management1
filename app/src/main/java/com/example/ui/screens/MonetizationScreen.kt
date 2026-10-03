@@ -74,7 +74,8 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
     var isLiveMode by remember { mutableStateOf(!adStats.isTestMode) }
     var bannerIdInput by remember { mutableStateOf(adStats.customBannerId.ifBlank { AdMobManager.USER_BANNER_ID }) }
     var appIdInput by remember { mutableStateOf(adStats.customAppId.ifBlank { AdMobManager.USER_APP_ID }) }
-    var interstitialIdInput by remember { mutableStateOf(adStats.customInterstitialId) }
+    var interstitialIdInput by remember { mutableStateOf(adStats.customInterstitialId.ifBlank { AdMobManager.USER_INTERSTITIAL_ID }) }
+    var rewardedIdInput by remember { mutableStateOf(adStats.customRewardedId.ifBlank { AdMobManager.USER_REWARDED_ID }) }
 
     LazyColumn(
         modifier = Modifier
@@ -212,8 +213,8 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                         ) {
                             MetricSubItem("مشاهدات البانر", "${adStats.bannerImpressions}")
                             MetricSubItem("إعلانات بينية", "${adStats.interstitialImpressions}")
+                            MetricSubItem("فيديو بمكافأة", "${adStats.rewardedImpressions}")
                             MetricSubItem("النقرات", "${adStats.clicks}")
-                            MetricSubItem("eCPM التقديري", "$1.85")
                         }
                     }
                 }
@@ -232,30 +233,55 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "يمكنك اختبار الإعلان البيني (Interstitial) للتأكد من سلاسة العرض قبل النشر",
+                        text = "يمكنك اختبار الإعلان البيني (Interstitial) وفيديو المكافأة (Rewarded) للتأكد من سلاسة العرض واحتساب الأرباح",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = {
-                            if (activity != null) {
-                                viewModel.triggerInterstitialTest(activity)
-                                Toast.makeText(context, "جاري فتح الإعلان البيني...", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("test_interstitial_button"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("عرض إعلان بيني الآن (Test Interstitial)")
+                        Button(
+                            onClick = {
+                                if (activity != null) {
+                                    viewModel.triggerInterstitialTest(activity)
+                                    Toast.makeText(context, "جاري فتح الإعلان البيني...", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("test_interstitial_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("إعلان بيني", fontSize = 12.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                if (activity != null) {
+                                    viewModel.triggerRewardedTest(activity) {
+                                        Toast.makeText(context, "🎉 مبروك! حصلت على 50 نقطة واشتراك VIP", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("test_rewarded_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF10B981)
+                            )
+                        ) {
+                            Icon(Icons.Default.MonetizationOn, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("فيديو بمكافأة 💰", fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -300,9 +326,22 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                         value = interstitialIdInput,
                         onValueChange = { interstitialIdInput = it },
                         label = { Text("معرف وحدة الإعلان البيني (اختياري)") },
+                        placeholder = { Text("ca-app-pub-8214981197698574/4793744758") },
+                        supportingText = {
+                            Text("يظهر بملء الشاشة بين التنقلات الرئيسية")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = rewardedIdInput,
+                        onValueChange = { rewardedIdInput = it },
+                        label = { Text("معرف إعلان بمكافأة Rewarded (الأعلى ربحاً)") },
                         placeholder = { Text("ca-app-pub-8214981197698574/xxxxxxx") },
                         supportingText = {
-                            Text("أنشئها من خيار 'إنشاء وحدة إعلانية أخرى' في لقطة شاشتك")
+                            Text("أنشئه من خيار 'إنشاء وحدة إعلانية أخرى' -> 'إعلان بمكافأة'")
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -315,6 +354,7 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                                 isTestMode = !isLiveMode,
                                 customBannerId = bannerIdInput.trim(),
                                 customInterstitialId = interstitialIdInput.trim(),
+                                customRewardedId = rewardedIdInput.trim(),
                                 customAppId = appIdInput.trim()
                             )
                             Toast.makeText(context, "تم حفظ إعدادات المعرفات بنجاح", Toast.LENGTH_SHORT).show()

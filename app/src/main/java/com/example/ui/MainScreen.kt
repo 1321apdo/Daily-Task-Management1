@@ -15,6 +15,11 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -45,6 +50,7 @@ import com.example.ui.components.AmbientGlowBackground
 import com.example.ui.components.NeonEmerald
 import com.example.ui.components.NeonGold
 import com.example.ui.components.TestAdDialog
+import com.example.ui.components.TestRewardedAdDialog
 import com.example.ui.dialogs.AddAppointmentDialog
 import com.example.ui.dialogs.AddTaskDialog
 import com.example.ui.dialogs.AddTransactionDialog
@@ -55,12 +61,16 @@ import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.FinanceScreen
 import com.example.ui.screens.MonetizationScreen
 import com.example.ui.screens.TasksScreen
+import com.example.ui.security.PinLockScreen
+import com.example.ui.security.PrivacyCenterDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: BusinessViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val privacySettings by viewModel.privacyManager.settings.collectAsStateWithLifecycle()
     val showSimulatedInterstitial by AdMobManager.showSimulatedInterstitial.collectAsStateWithLifecycle()
+    val showSimulatedRewarded by AdMobManager.showSimulatedRewarded.collectAsStateWithLifecycle()
     var isRewardGameDialogOpen by remember { mutableStateOf(false) }
 
     // Back handling: if on secondary tab, return to Dashboard first
@@ -92,10 +102,34 @@ fun MainScreen(viewModel: BusinessViewModel) {
                             )
                         },
                         actions = {
+                            // Discreet Mode (Hide numbers toggle)
+                            IconButton(
+                                onClick = { viewModel.privacyManager.toggleDiscreetMode() },
+                                modifier = Modifier.testTag("action_toggle_discreet")
+                            ) {
+                                Icon(
+                                    imageVector = if (privacySettings.isDiscreetMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = "وضع إخفاء الأرقام",
+                                    tint = if (privacySettings.isDiscreetMode) Color(0xFFFFD54F) else Color.White
+                                )
+                            }
+
+                            // Privacy Center Shield Button
+                            IconButton(
+                                onClick = { viewModel.setPrivacyDialog(true) },
+                                modifier = Modifier.testTag("action_privacy_center")
+                            ) {
+                                Icon(
+                                    imageVector = if (privacySettings.isPinEnabled) Icons.Default.Lock else Icons.Default.Shield,
+                                    contentDescription = "مركز الخصوصية والأمان",
+                                    tint = NeonEmerald
+                                )
+                            }
+
                             // Floating Reward Game Button in Top Bar
                             FloatingRewardPill(
                                 onClick = { isRewardGameDialogOpen = true },
-                                modifier = Modifier.padding(end = 8.dp)
+                                modifier = Modifier.padding(end = 4.dp)
                             )
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -250,6 +284,27 @@ fun MainScreen(viewModel: BusinessViewModel) {
                 TestAdDialog(
                     onDismiss = { AdMobManager.dismissSimulatedInterstitial() }
                 )
+            }
+
+            if (showSimulatedRewarded) {
+                TestRewardedAdDialog(
+                    onDismiss = { claimReward ->
+                        AdMobManager.dismissSimulatedRewarded(claimReward = claimReward)
+                    }
+                )
+            }
+
+            // Privacy Center Dialog
+            if (uiState.isPrivacyDialogOpen) {
+                PrivacyCenterDialog(
+                    privacyManager = viewModel.privacyManager,
+                    onDismiss = { viewModel.setPrivacyDialog(false) }
+                )
+            }
+
+            // High Security PIN Lock Screen (covers entire UI when app is locked)
+            if (privacySettings.isAppLocked) {
+                PinLockScreen(privacyManager = viewModel.privacyManager)
             }
         }
     }

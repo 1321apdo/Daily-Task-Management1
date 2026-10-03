@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: BusinessViewModel by viewModels {
         val app = application as BusinessApplication
-        BusinessViewModel.Factory(app.repository)
+        BusinessViewModel.Factory(app.repository, app.privacyManager)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,12 +35,13 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Delay interstitial preloading so the initial user interface opens instantly with 0 freeze
+        // Delay ad preloading so the initial user interface opens instantly with 0 freeze
         lifecycleScope.launch {
             try {
                 delay(3000)
                 if (!AdMobManager.isRunningOnEmulator()) {
                     AdMobManager.loadInterstitialAd(this@MainActivity)
+                    AdMobManager.loadRewardedAd(this@MainActivity)
                 }
             } catch (_: Throwable) {
                 // Ignore safe ad loading error

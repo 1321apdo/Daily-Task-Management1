@@ -15,6 +15,7 @@ import com.example.model.Priority
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import com.example.model.TransactionType
+import com.example.security.PrivacyManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,11 +32,13 @@ data class BusinessUiState(
     val isAddTaskDialogOpen: Boolean = false,
     val isAddAppointmentDialogOpen: Boolean = false,
     val isAddTransactionDialogOpen: Boolean = false,
+    val isPrivacyDialogOpen: Boolean = false,
     val selectedTab: Int = 0 // 0: Dashboard, 1: Tasks, 2: Appointments, 3: Finance, 4: AdMob
 )
 
 class BusinessViewModel(
-    private val repository: BusinessRepository
+    private val repository: BusinessRepository,
+    val privacyManager: PrivacyManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BusinessUiState())
@@ -232,12 +235,14 @@ class BusinessViewModel(
         isTestMode: Boolean,
         customBannerId: String,
         customInterstitialId: String,
+        customRewardedId: String,
         customAppId: String
     ) {
         AdMobManager.updateConfig(
             isTestMode = isTestMode,
             customBannerId = customBannerId,
             customInterstitialId = customInterstitialId,
+            customRewardedId = customRewardedId,
             customAppId = customAppId
         )
     }
@@ -246,11 +251,24 @@ class BusinessViewModel(
         AdMobManager.showInterstitialAd(activity, force = true)
     }
 
-    class Factory(private val repository: BusinessRepository) : ViewModelProvider.Factory {
+    fun triggerRewardedTest(activity: Activity, onRewardEarned: () -> Unit = {}) {
+        AdMobManager.showRewardedAd(activity) {
+            onRewardEarned()
+        }
+    }
+
+    fun setPrivacyDialog(isOpen: Boolean) {
+        _uiState.update { it.copy(isPrivacyDialogOpen = isOpen) }
+    }
+
+    class Factory(
+        private val repository: BusinessRepository,
+        private val privacyManager: PrivacyManager
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(BusinessViewModel::class.java)) {
-                return BusinessViewModel(repository) as T
+                return BusinessViewModel(repository, privacyManager) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
