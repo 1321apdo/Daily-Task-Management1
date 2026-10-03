@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,10 +57,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.ads.AdBannerView
 import com.example.model.Appointment
 import com.example.model.Priority
@@ -425,18 +428,18 @@ private fun ExecutiveHeader() {
             }
 
             Surface(
-                shape = CircleShape,
-                color = Color(0xFF14291F),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, NeonEmerald),
-                modifier = Modifier.size(44.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF0A1C14),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, NeonEmerald.copy(alpha = 0.7f)),
+                modifier = Modifier.size(46.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.MonetizationOn,
-                        contentDescription = "الأرباح",
-                        tint = NeonGold
-                    )
-                }
+                Image(
+                    painter = painterResource(R.drawable.app_launcher_foreground_1790996683198),
+                    contentDescription = "شعار التطبيق",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(12.dp))
+                )
             }
         }
     }
