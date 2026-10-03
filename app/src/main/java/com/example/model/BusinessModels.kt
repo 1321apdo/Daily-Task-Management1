@@ -16,18 +16,33 @@ enum class TaskStatus(val titleAr: String) {
     COMPLETED("مكتمل")
 }
 
+/**
+ * Room Database Schema Entity for Business Tasks
+ * Stores business tasks, associated project names, deadlines, priority, and completion status.
+ */
 @Entity(tableName = "tasks")
 data class TaskItem(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val title: String,
     val description: String = "",
-    val priority: Priority = Priority.MEDIUM,
+    val projectName: String = "",
+    val deadline: Long = System.currentTimeMillis() + 86400000L,
     val status: TaskStatus = TaskStatus.PENDING,
-    val dueDate: Long = System.currentTimeMillis() + 86400000L,
+    val priority: Priority = Priority.MEDIUM,
     val clientOrProject: String = "",
+    val dueDate: Long = 0L,
     val createdAt: Long = System.currentTimeMillis()
-)
+) {
+    val isCompleted: Boolean
+        get() = status == TaskStatus.COMPLETED
+
+    val effectiveProjectName: String
+        get() = projectName.ifBlank { clientOrProject }
+
+    val effectiveDeadline: Long
+        get() = if (deadline > 0) deadline else (if (dueDate > 0) dueDate else createdAt + 86400000L)
+}
 
 enum class AppointmentType(val titleAr: String) {
     IN_PERSON("اجتماع حضوري"),

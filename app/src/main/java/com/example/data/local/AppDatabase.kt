@@ -57,6 +57,8 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "دراسة البنود المالية والقانونية وتجهيز النسخة النهائية للتوقيع.",
                     priority = Priority.URGENT,
                     status = TaskStatus.IN_PROGRESS,
+                    projectName = "شركة الأفق للاستثمار",
+                    deadline = now + day,
                     dueDate = now + day,
                     clientOrProject = "شركة الأفق للاستثمار"
                 ),
@@ -65,6 +67,8 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "حساب إجمالي المبيعات، عوائد الإعلانات، والمصروفات التشغيلية.",
                     priority = Priority.HIGH,
                     status = TaskStatus.PENDING,
+                    projectName = "الإدارة المالية",
+                    deadline = now + (day * 2),
                     dueDate = now + (day * 2),
                     clientOrProject = "الإدارة المالية"
                 ),
@@ -73,6 +77,8 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "تجهيز البانرات وتحديد الميزانية واستهداف العملاء المحتملين.",
                     priority = Priority.MEDIUM,
                     status = TaskStatus.PENDING,
+                    projectName = "فريق التسويق",
+                    deadline = now + (day * 3),
                     dueDate = now + (day * 3),
                     clientOrProject = "فريق التسويق"
                 ),
@@ -81,6 +87,8 @@ abstract class AppDatabase : RoomDatabase() {
                     description = "مواءمة الأهداف التشغيلية مع خطة زيادة الأرباح بنسبة 25%.",
                     priority = Priority.LOW,
                     status = TaskStatus.COMPLETED,
+                    projectName = "مجلس الإدارة",
+                    deadline = now - day,
                     dueDate = now - day,
                     clientOrProject = "مجلس الإدارة"
                 )

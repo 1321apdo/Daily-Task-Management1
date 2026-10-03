@@ -15,10 +15,20 @@ class BusinessRepository(private val businessDao: BusinessDao) {
     val allTasks: Flow<List<TaskItem>> = businessDao.getAllTasks()
     val activeTasks: Flow<List<TaskItem>> = businessDao.getActiveTasks()
 
+    fun getTasksByProject(projectName: String): Flow<List<TaskItem>> =
+        businessDao.getTasksByProject(projectName)
+
+    fun getTasksByStatus(status: TaskStatus): Flow<List<TaskItem>> =
+        businessDao.getTasksByStatus(status)
+
+    fun getTasksDueBefore(deadline: Long): Flow<List<TaskItem>> =
+        businessDao.getTasksDueBefore(deadline)
+
     suspend fun insertTask(task: TaskItem): Long = businessDao.insertTask(task)
     suspend fun updateTask(task: TaskItem) = businessDao.updateTask(task)
     suspend fun deleteTask(task: TaskItem) = businessDao.deleteTask(task)
     suspend fun updateTaskStatus(id: Long, status: TaskStatus) = businessDao.updateTaskStatus(id, status)
+    suspend fun toggleTaskCompletion(id: Long) = businessDao.toggleTaskCompletion(id)
 
     suspend fun checkAndSeedInitialData() {
         if (businessDao.getAnyTask() == null) {

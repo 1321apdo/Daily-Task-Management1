@@ -24,25 +24,37 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'gradle'
 
-    - name: 3. إعداد بيئة أندرويد (Set up Android SDK)
-      uses: android-actions/setup-android@v3
-
-    - name: 4. قبول تراخيص Android SDK
+    - name: 3. قبول تراخيص Android وتجهيز الملفات
       run: |
-        yes | sdkmanager --licenses || true
+        echo "=== قبول تراخيص Android SDK تلقائياً وبشكل فوري ==="
+        mkdir -p "$ANDROID_HOME/licenses" || true
+        echo "24333f8a63b682569dd3187f4f77043d0f881c38" > "$ANDROID_HOME/licenses/android-sdk-license"
+        echo "84831b9409646a2b8eacfb66302a3261be229b65" >> "$ANDROID_HOME/licenses/android-sdk-license"
+        echo "d3a4524e0fac0676483408c4e786b42a8671ffbe" >> "$ANDROID_HOME/licenses/android-sdk-license"
+        echo "601085b94cd77f0b54ff86406957099fed7946d6" > "$ANDROID_HOME/licenses/android-googletv-license"
+        echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > "$ANDROID_HOME/licenses/google-gdk-license"
+        echo "e9acab5b5fbb560a72cfa4e27c396f2c6dd49cc5" > "$ANDROID_HOME/licenses/mips-android-sysimage-license"
+        echo "793f5e9698ab43ce143d503840fa38b5252a3a47" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-    - name: 5. تهيئة نظام Gradle (9.3.1)
+        echo "=== تجهيز ملف .env لمنع أخطاء Secrets Plugin ==="
+        if [ -f ".env.example" ]; then
+          cp .env.example .env
+        else
+          touch .env
+        fi
+
+    - name: 4. تهيئة نظام Gradle (9.3.1)
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: 9.3.1
 
-    - name: 6. تجهيز مفتاح التوقيع وتوليد مشغل البناء
+    - name: 5. تجهيز مفتاح التوقيع وتوليد مشغل البناء
       run: |
         echo "=== فحص وتوليد مفتاح debug.keystore للتوقيع ==="
         if [ ! -f "debug.keystore" ]; then
-          echo "إنشاء debug.keystore تلقائياً لتوقيع حزمة الـ APK..."
+          echo "إنشاء debug.keystore لتوقيع التطبيق..."
           keytool -genkeypair -v -keystore debug.keystore \
             -alias androiddebugkey \
             -storepass android \
@@ -52,16 +64,21 @@ jobs:
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
         fi
+        cp -f debug.keystore app/debug.keystore || true
 
-        echo "=== تجهيز ملف تشغيل Gradle ==="
+        echo "=== تجهيز مشغل Gradle Wrapper 9.3.1 ==="
         gradle wrapper --gradle-version 9.3.1 --distribution-type bin
         chmod +x gradlew
 
-    - name: 7. بناء حزمة التطبيق (Build APK)
+    - name: 6. بناء حزمة التطبيق (Build APK)
       run: |
-        ./gradlew assembleDebug --no-daemon --no-configuration-cache --stacktrace
+        ./gradlew assembleDebug \
+          --no-daemon \
+          --no-configuration-cache \
+          -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m" \
+          --stacktrace
 
-    - name: 8. رفع ملف الـ APK النهائي للتحميل المباشر
+    - name: 7. رفع ملف الـ APK النهائي للتحميل المباشر
       uses: actions/upload-artifact@v4
       with:
         name: app-debug-apk

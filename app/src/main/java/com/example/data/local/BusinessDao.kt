@@ -20,11 +20,20 @@ interface BusinessDao {
     @Query("SELECT * FROM tasks LIMIT 1")
     suspend fun getAnyTask(): TaskItem?
 
-    @Query("SELECT * FROM tasks ORDER BY status ASC, priority DESC, dueDate ASC")
+    @Query("SELECT * FROM tasks ORDER BY status ASC, priority DESC, deadline ASC, dueDate ASC")
     fun getAllTasks(): Flow<List<TaskItem>>
 
-    @Query("SELECT * FROM tasks WHERE status != :completedStatus ORDER BY dueDate ASC")
+    @Query("SELECT * FROM tasks WHERE status != :completedStatus ORDER BY deadline ASC, dueDate ASC")
     fun getActiveTasks(completedStatus: TaskStatus = TaskStatus.COMPLETED): Flow<List<TaskItem>>
+
+    @Query("SELECT * FROM tasks WHERE projectName = :projectName OR clientOrProject = :projectName ORDER BY deadline ASC, dueDate ASC")
+    fun getTasksByProject(projectName: String): Flow<List<TaskItem>>
+
+    @Query("SELECT * FROM tasks WHERE status = :status ORDER BY deadline ASC, dueDate ASC")
+    fun getTasksByStatus(status: TaskStatus): Flow<List<TaskItem>>
+
+    @Query("SELECT * FROM tasks WHERE (deadline <= :deadline OR dueDate <= :deadline) AND status != 'COMPLETED' ORDER BY deadline ASC, dueDate ASC")
+    fun getTasksDueBefore(deadline: Long): Flow<List<TaskItem>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: TaskItem): Long
@@ -37,6 +46,9 @@ interface BusinessDao {
 
     @Query("UPDATE tasks SET status = :status WHERE id = :id")
     suspend fun updateTaskStatus(id: Long, status: TaskStatus)
+
+    @Query("UPDATE tasks SET status = CASE WHEN status = 'COMPLETED' THEN 'PENDING' ELSE 'COMPLETED' END WHERE id = :id")
+    suspend fun toggleTaskCompletion(id: Long)
 
 
     // --- Appointments ---
