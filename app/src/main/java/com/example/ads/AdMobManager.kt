@@ -68,7 +68,8 @@ object AdMobManager {
     private var isInterstitialLoading = false
     private var isRewardedLoading = false
     private var lastInterstitialShowTime = 0L
-    private const val MIN_INTERSTITIAL_INTERVAL_MS = 15000L // 15 seconds policy cooldown
+    // Google AdMob Best Practices: 60-second minimum cooldown between interstitial ads to avoid policy strikes
+    private const val MIN_INTERSTITIAL_INTERVAL_MS = 60000L
 
     fun isRunningOnEmulator(): Boolean {
         val fingerprint = Build.FINGERPRINT.lowercase()

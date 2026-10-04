@@ -9,6 +9,7 @@ import androidx.room.Update
 import com.example.model.Appointment
 import com.example.model.AppointmentStatus
 import com.example.model.FinanceTransaction
+import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,9 @@ interface BusinessDao {
 
     @Query("SELECT * FROM tasks ORDER BY status ASC, priority DESC, deadline ASC, dueDate ASC")
     fun getAllTasks(): Flow<List<TaskItem>>
+
+    @Query("SELECT * FROM tasks WHERE category = :category ORDER BY status ASC, priority DESC, deadline ASC, dueDate ASC")
+    fun getTasksByCategory(category: TaskCategory): Flow<List<TaskItem>>
 
     @Query("SELECT * FROM tasks WHERE status != :completedStatus ORDER BY deadline ASC, dueDate ASC")
     fun getActiveTasks(completedStatus: TaskStatus = TaskStatus.COMPLETED): Flow<List<TaskItem>>
@@ -54,6 +58,9 @@ interface BusinessDao {
     // --- Appointments ---
     @Query("SELECT * FROM appointments ORDER BY dateTime ASC")
     fun getAllAppointments(): Flow<List<Appointment>>
+
+    @Query("SELECT * FROM appointments ORDER BY dateTime ASC")
+    suspend fun getAllAppointmentsOnce(): List<Appointment>
 
     @Query("SELECT * FROM appointments WHERE dateTime >= :currentTime ORDER BY dateTime ASC")
     fun getUpcomingAppointments(currentTime: Long): Flow<List<Appointment>>

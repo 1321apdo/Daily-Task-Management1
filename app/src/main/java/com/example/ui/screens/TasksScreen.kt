@@ -1,6 +1,16 @@
 package com.example.ui.screens
 
 import android.app.Activity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +46,14 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -48,6 +63,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ads.AdBannerView
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import com.example.ui.BusinessViewModel
@@ -179,9 +197,63 @@ fun TasksScreen(viewModel: BusinessViewModel) {
                 }
             }
 
-            // Filter Chips
+            // Category Filter Chips
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                item {
+                    val isAllSelected = uiState.taskFilterCategory == null
+                    SuggestionChip(
+                        onClick = { viewModel.setTaskFilterCategory(null) },
+                        label = {
+                            Text(
+                                text = "جميع التصنيفات",
+                                color = if (isAllSelected) Color.Black else Color.White,
+                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = if (isAllSelected) {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = NeonEmerald)
+                        } else {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = Color(0xFF1B2E24))
+                        }
+                    )
+                }
+
+                items(TaskCategory.values()) { cat ->
+                    val isSelected = uiState.taskFilterCategory == cat
+                    val count = allTasks.count { it.category == cat }
+                    val activeColor = when (cat) {
+                        TaskCategory.URGENT -> Color(0xFFFF453A)
+                        TaskCategory.WORK -> NeonEmerald
+                        TaskCategory.PERSONAL -> Color(0xFFBF5AF2)
+                        TaskCategory.FINANCE -> NeonGold
+                        TaskCategory.GENERAL -> Color(0xFF64D2FF)
+                    }
+                    SuggestionChip(
+                        onClick = {
+                            viewModel.setTaskFilterCategory(if (isSelected) null else cat)
+                        },
+                        label = {
+                            Text(
+                                text = "${cat.iconEmoji} ${cat.titleAr} ($count)",
+                                color = if (isSelected) Color.Black else Color.White,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = if (isSelected) {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = activeColor)
+                        } else {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = Color(0xFF1B2E24))
+                        }
+                    )
+                }
+            }
+
+            // Status Filter Chips
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
@@ -251,7 +323,9 @@ fun TasksScreen(viewModel: BusinessViewModel) {
                         GlowingTaskListItem(
                             task = task,
                             onToggle = { viewModel.toggleTaskCompleted(task, activity) },
-                            onDelete = { viewModel.deleteTask(task) }
+                            onDelete = { viewModel.deleteTask(task) },
+                            onEdit = { viewModel.setEditingTask(task) },
+                            modifier = Modifier.animateItem()
                         )
                     }
                 }
@@ -264,63 +338,100 @@ fun TasksScreen(viewModel: BusinessViewModel) {
 private fun GlowingTaskListItem(
     task: TaskItem,
     onToggle: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isCompleted = task.status == TaskStatus.COMPLETED
     val dateFormat = SimpleDateFormat("d MMMM yyyy", Locale("ar"))
     val dueDateStr = dateFormat.format(Date(task.dueDate))
+    var isDeleting by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    GlowFloatingCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("task_card_${task.id}"),
-        glowColor = if (isCompleted) Color(0xFF274235) else NeonEmerald,
-        shape = RoundedCornerShape(16.dp)
+    val scaleCheck by animateFloatAsState(
+        targetValue = if (isCompleted) 1.2f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "task_check_scale"
+    )
+
+    AnimatedVisibility(
+        visible = !isDeleting,
+        enter = fadeIn(animationSpec = tween(350)) + expandVertically(
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)
+        ),
+        exit = fadeOut(animationSpec = tween(250)) + shrinkVertically(
+            animationSpec = tween(300)
+        ) + slideOutHorizontally(animationSpec = tween(300)) { -it },
+        modifier = modifier
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onToggle) {
-                    Icon(
-                        imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                        contentDescription = "إكمال المهمة",
-                        tint = if (isCompleted) NeonEmerald else Color(0xFF7E9488),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = task.title,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
+        GlowFloatingCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("task_card_${task.id}"),
+            glowColor = if (isCompleted) Color(0xFF274235) else NeonEmerald,
+            shape = RoundedCornerShape(16.dp),
+            onClick = onEdit
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onToggle) {
+                        Icon(
+                            imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                            contentDescription = "إكمال المهمة",
+                            tint = if (isCompleted) NeonEmerald else Color(0xFF7E9488),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .scale(scaleCheck)
                         )
-                    )
+                    }
 
-                    if (task.clientOrProject.isNotBlank()) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "المشروع: ${task.clientOrProject}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = NeonEmerald
+                            text = task.title,
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                            )
+                        )
+
+                        if (task.clientOrProject.isNotBlank()) {
+                            Text(
+                                text = "المشروع: ${task.clientOrProject}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NeonEmerald
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CategoryBadge(category = task.category)
+                        PriorityBadge(priority = task.priority)
+                    }
+
+                    IconButton(
+                        onClick = {
+                            isDeleting = true
+                            scope.launch {
+                                delay(280)
+                                onDelete()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "حذف المهمة",
+                            tint = Color(0xFFFF5252).copy(alpha = 0.8f),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-
-                PriorityBadge(priority = task.priority)
-
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "حذف المهمة",
-                        tint = Color(0xFFFF5252).copy(alpha = 0.8f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
 
             if (task.description.isNotBlank()) {
                 Text(
@@ -354,4 +465,5 @@ private fun GlowingTaskListItem(
             }
         }
     }
+}
 }

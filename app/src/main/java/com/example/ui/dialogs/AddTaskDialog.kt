@@ -1,6 +1,7 @@
 package com.example.ui.dialogs
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,12 +9,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Flag
@@ -37,17 +41,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.model.Priority
+import com.example.model.TaskCategory
 
 @Composable
 fun AddTaskDialog(
     onDismiss: () -> Unit,
-    onConfirm: (title: String, desc: String, priority: Priority, dueDate: Long, clientOrProject: String, activity: Activity?) -> Unit
+    onConfirm: (title: String, desc: String, priority: Priority, dueDate: Long, clientOrProject: String, category: TaskCategory, activity: Activity?) -> Unit
 ) {
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var clientOrProject by remember { mutableStateOf("") }
     var priority by remember { mutableStateOf(Priority.MEDIUM) }
+    var category by remember { mutableStateOf(TaskCategory.WORK) }
     var isTitleError by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -114,6 +120,28 @@ fun AddTaskDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Task Category Selection
+                Text(
+                    text = "تصنيف المهمة:",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(TaskCategory.values()) { cat ->
+                        FilterChip(
+                            selected = category == cat,
+                            onClick = { category = cat },
+                            label = { Text("${cat.iconEmoji} ${cat.titleAr}") },
+                            modifier = Modifier.testTag("category_chip_${cat.name}")
+                        )
+                    }
+                }
+
+                // Priority Selection
                 Text(
                     text = "مستوى الأهمية والسرعة:",
                     style = MaterialTheme.typography.labelLarge,
@@ -148,8 +176,10 @@ fun AddTaskDialog(
                             priority,
                             System.currentTimeMillis() + 86400000L,
                             clientOrProject.trim(),
+                            category,
                             activity
                         )
+                        Toast.makeText(context, "✨ تمت إضافة المهمة إلى جدول أعمالك!", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.testTag("confirm_add_task_button")
@@ -167,3 +197,4 @@ fun AddTaskDialog(
         shape = RoundedCornerShape(16.dp)
     )
 }
+

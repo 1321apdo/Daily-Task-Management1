@@ -5,6 +5,7 @@ import com.example.data.local.BusinessDao
 import com.example.model.Appointment
 import com.example.model.AppointmentStatus
 import com.example.model.FinanceTransaction
+import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,9 @@ class BusinessRepository(private val businessDao: BusinessDao) {
     // Tasks
     val allTasks: Flow<List<TaskItem>> = businessDao.getAllTasks()
     val activeTasks: Flow<List<TaskItem>> = businessDao.getActiveTasks()
+
+    fun getTasksByCategory(category: TaskCategory): Flow<List<TaskItem>> =
+        businessDao.getTasksByCategory(category)
 
     fun getTasksByProject(projectName: String): Flow<List<TaskItem>> =
         businessDao.getTasksByProject(projectName)
@@ -38,6 +42,7 @@ class BusinessRepository(private val businessDao: BusinessDao) {
 
     // Appointments
     val allAppointments: Flow<List<Appointment>> = businessDao.getAllAppointments()
+    suspend fun getAllAppointmentsOnce(): List<Appointment> = businessDao.getAllAppointmentsOnce()
     fun getUpcomingAppointments(currentTime: Long): Flow<List<Appointment>> =
         businessDao.getUpcomingAppointments(currentTime)
 

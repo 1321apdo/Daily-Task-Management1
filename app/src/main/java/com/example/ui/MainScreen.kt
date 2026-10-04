@@ -55,6 +55,7 @@ import com.example.ui.components.TestRewardedAdDialog
 import com.example.ui.dialogs.AddAppointmentDialog
 import com.example.ui.dialogs.AddTaskDialog
 import com.example.ui.dialogs.AddTransactionDialog
+import com.example.ui.dialogs.EditTaskDialog
 import com.example.ui.rewards.FloatingRewardPill
 import com.example.ui.rewards.RewardGameDialog
 import com.example.ui.screens.AppointmentsScreen
@@ -258,8 +259,22 @@ fun MainScreen(viewModel: BusinessViewModel) {
             if (uiState.isAddTaskDialogOpen) {
                 AddTaskDialog(
                     onDismiss = { viewModel.setAddTaskDialog(false) },
-                    onConfirm = { title, desc, priority, dueDate, client, act ->
-                        viewModel.addTask(title, desc, priority, dueDate, client, act)
+                    onConfirm = { title, desc, priority, dueDate, client, category, act ->
+                        viewModel.addTask(title, desc, priority, dueDate, client, category, act)
+                    }
+                )
+            }
+
+            uiState.editingTask?.let { taskToEdit ->
+                EditTaskDialog(
+                    task = taskToEdit,
+                    onDismiss = { viewModel.setEditingTask(null) },
+                    onConfirm = { updatedTask ->
+                        viewModel.updateTask(updatedTask)
+                    },
+                    onDelete = { taskToDelete ->
+                        viewModel.deleteTask(taskToDelete)
+                        viewModel.setEditingTask(null)
                     }
                 )
             }

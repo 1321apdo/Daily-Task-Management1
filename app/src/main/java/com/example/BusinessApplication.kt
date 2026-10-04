@@ -29,6 +29,11 @@ class BusinessApplication : Application() {
             }
         } catch (_: Throwable) {}
 
+        // Initialize background notification channel
+        try {
+            com.example.notifications.BackgroundReminderManager.createNotificationChannel(this)
+        } catch (_: Throwable) {}
+
         // Initialize Google Mobile Ads safely on real devices without blocking UI
         try {
             val requestConfig = RequestConfiguration.Builder()

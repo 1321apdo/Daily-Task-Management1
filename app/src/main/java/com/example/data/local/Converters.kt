@@ -4,10 +4,19 @@ import androidx.room.TypeConverter
 import com.example.model.AppointmentStatus
 import com.example.model.AppointmentType
 import com.example.model.Priority
+import com.example.model.TaskCategory
 import com.example.model.TaskStatus
 import com.example.model.TransactionType
 
 class Converters {
+    @TypeConverter
+    fun fromTaskCategory(value: TaskCategory?): String = value?.name ?: TaskCategory.WORK.name
+
+    @TypeConverter
+    fun toTaskCategory(value: String?): TaskCategory = value?.let {
+        try { enumValueOf<TaskCategory>(it) } catch (e: Exception) { TaskCategory.WORK }
+    } ?: TaskCategory.WORK
+
     @TypeConverter
     fun fromPriority(value: Priority?): String = value?.name ?: Priority.MEDIUM.name
 

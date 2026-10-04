@@ -11,6 +11,7 @@ import com.example.model.AppointmentStatus
 import com.example.model.AppointmentType
 import com.example.model.FinanceTransaction
 import com.example.model.Priority
+import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import com.example.model.TransactionType
@@ -20,7 +21,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [TaskItem::class, Appointment::class, FinanceTransaction::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -50,11 +51,12 @@ abstract class AppDatabase : RoomDatabase() {
             val now = System.currentTimeMillis()
             val day = 86400000L
 
-            // Initial Sample Tasks
+            // Initial Sample Tasks with Categories
             val sampleTasks = listOf(
                 TaskItem(
                     title = "مراجعة العقد وتوقيع الشراكة التجارية",
                     description = "دراسة البنود المالية والقانونية وتجهيز النسخة النهائية للتوقيع.",
+                    category = TaskCategory.URGENT,
                     priority = Priority.URGENT,
                     status = TaskStatus.IN_PROGRESS,
                     projectName = "شركة الأفق للاستثمار",
@@ -65,6 +67,7 @@ abstract class AppDatabase : RoomDatabase() {
                 TaskItem(
                     title = "إعداد تقرير الأرباح الربع سنوي Q3",
                     description = "حساب إجمالي المبيعات، عوائد الإعلانات، والمصروفات التشغيلية.",
+                    category = TaskCategory.FINANCE,
                     priority = Priority.HIGH,
                     status = TaskStatus.PENDING,
                     projectName = "الإدارة المالية",
@@ -75,6 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                 TaskItem(
                     title = "إطلاق الحملة الإعلانية الرقمية الجديدة",
                     description = "تجهيز البانرات وتحديد الميزانية واستهداف العملاء المحتملين.",
+                    category = TaskCategory.WORK,
                     priority = Priority.MEDIUM,
                     status = TaskStatus.PENDING,
                     projectName = "فريق التسويق",
@@ -83,8 +87,20 @@ abstract class AppDatabase : RoomDatabase() {
                     clientOrProject = "فريق التسويق"
                 ),
                 TaskItem(
+                    title = "جلسة قراءة وتطوير الذات وإدارة الوقت",
+                    description = "متابعة أحدث أساليب القيادة وإدارة الأعمال الشخصية.",
+                    category = TaskCategory.PERSONAL,
+                    priority = Priority.LOW,
+                    status = TaskStatus.PENDING,
+                    projectName = "أهداف شخصية",
+                    deadline = now + (day * 4),
+                    dueDate = now + (day * 4),
+                    clientOrProject = "تطوير ذاتي"
+                ),
+                TaskItem(
                     title = "تحديث خطة نمو المشاريع وتوزيع الميزانية",
                     description = "مواءمة الأهداف التشغيلية مع خطة زيادة الأرباح بنسبة 25%.",
+                    category = TaskCategory.WORK,
                     priority = Priority.LOW,
                     status = TaskStatus.COMPLETED,
                     projectName = "مجلس الإدارة",

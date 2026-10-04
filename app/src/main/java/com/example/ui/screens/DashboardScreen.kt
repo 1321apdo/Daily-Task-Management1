@@ -3,6 +3,9 @@ package com.example.ui.screens
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,6 +48,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,6 +58,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,6 +73,7 @@ import com.example.R
 import com.example.ads.AdBannerView
 import com.example.model.Appointment
 import com.example.model.Priority
+import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import com.example.ui.BusinessViewModel
@@ -95,6 +102,7 @@ fun DashboardScreen(
     val totalExpenses by viewModel.totalExpenses.collectAsStateWithLifecycle()
     val adStats by viewModel.adStats.collectAsStateWithLifecycle()
     val privacySettings by viewModel.privacyManager.settings.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val netProfit = totalRevenue - totalExpenses
     val pendingTasksCount = allTasks.count { it.status != TaskStatus.COMPLETED }
@@ -230,7 +238,7 @@ fun DashboardScreen(
             }
         }
 
-        // High Priority Tasks
+        // Tasks Section with Category Filters
         item {
             Spacer(modifier = Modifier.height(18.dp))
             Row(
@@ -241,20 +249,82 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "المهام العاجلة والمهمة",
+                    text = "المهام والأنشطة",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 )
                 TextButton(onClick = onNavigateToTasks) {
-                    Text("إدارة المهام", color = NeonEmerald)
+                    Text("عرض الكل", color = NeonEmerald)
                 }
             }
         }
 
-        val topTasks = allTasks.filter { it.status != TaskStatus.COMPLETED }.take(3)
-        if (topTasks.isEmpty()) {
+        // Horizontal Category Filter Row in Main Interface
+        item {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    val isAllSelected = uiState.taskFilterCategory == null
+                    SuggestionChip(
+                        onClick = { viewModel.setTaskFilterCategory(null) },
+                        label = {
+                            Text(
+                                text = "الكل",
+                                color = if (isAllSelected) Color.Black else Color.White,
+                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = if (isAllSelected) {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = NeonEmerald)
+                        } else {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = Color(0xFF162B21))
+                        }
+                    )
+                }
+
+                items(TaskCategory.values()) { cat ->
+                    val isSelected = uiState.taskFilterCategory == cat
+                    val count = allTasks.count { it.status != TaskStatus.COMPLETED && it.category == cat }
+                    val activeColor = when (cat) {
+                        TaskCategory.URGENT -> Color(0xFFFF453A)
+                        TaskCategory.WORK -> NeonEmerald
+                        TaskCategory.PERSONAL -> Color(0xFFBF5AF2)
+                        TaskCategory.FINANCE -> NeonGold
+                        TaskCategory.GENERAL -> Color(0xFF64D2FF)
+                    }
+                    SuggestionChip(
+                        onClick = {
+                            viewModel.setTaskFilterCategory(if (isSelected) null else cat)
+                        },
+                        label = {
+                            Text(
+                                text = "${cat.iconEmoji} ${cat.titleAr} ($count)",
+                                color = if (isSelected) Color.Black else Color.White,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = if (isSelected) {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = activeColor)
+                        } else {
+                            SuggestionChipDefaults.suggestionChipColors(containerColor = Color(0xFF162B21))
+                        }
+                    )
+                }
+            }
+        }
+
+        val activeTasks = allTasks.filter { it.status != TaskStatus.COMPLETED }
+        val categoryFilteredTasks = if (uiState.taskFilterCategory == null) {
+            activeTasks.take(4)
+        } else {
+            activeTasks.filter { it.category == uiState.taskFilterCategory }.take(4)
+        }
+
+        if (categoryFilteredTasks.isEmpty()) {
             item {
                 GlowFloatingCard(
                     modifier = Modifier
@@ -274,7 +344,10 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "أحسنت! جميع المهام العاجلة مكتملة حالياً.",
+                            text = if (uiState.taskFilterCategory == null)
+                                "أحسنت! جميع المهام مكتملة حالياً."
+                            else
+                                "لا توجد مهام معلقة في تصنيف (${uiState.taskFilterCategory?.titleAr}).",
                             color = Color.White,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -282,10 +355,11 @@ fun DashboardScreen(
                 }
             }
         } else {
-            items(topTasks, key = { it.id }) { task ->
+            items(categoryFilteredTasks, key = { it.id }) { task ->
                 GlowingTaskItem(
                     task = task,
-                    onToggle = { viewModel.toggleTaskCompleted(task, activity) }
+                    onToggle = { viewModel.toggleTaskCompleted(task, activity) },
+                    modifier = Modifier.animateItem()
                 )
             }
         }
@@ -710,10 +784,18 @@ private fun EmptyScheduleBanner(onSchedule: () -> Unit) {
 @Composable
 private fun GlowingTaskItem(
     task: TaskItem,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val isCompleted = task.status == TaskStatus.COMPLETED
+    val scaleCheck by animateFloatAsState(
+        targetValue = if (isCompleted) 1.2f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "dashboard_task_check_scale"
+    )
+
     GlowFloatingCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
         glowColor = when (task.priority) {
@@ -742,7 +824,10 @@ private fun GlowingTaskItem(
                         NeonEmerald
                     } else {
                         Color(0xFF88998F)
-                    }
+                    },
+                    modifier = Modifier
+                        .size(24.dp)
+                        .scale(scaleCheck)
                 )
             }
 
@@ -761,8 +846,39 @@ private fun GlowingTaskItem(
                 }
             }
 
-            PriorityBadge(priority = task.priority)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CategoryBadge(category = task.category)
+                PriorityBadge(priority = task.priority)
+            }
         }
+    }
+}
+
+@Composable
+fun CategoryBadge(category: TaskCategory) {
+    val (color, bgColor) = when (category) {
+        TaskCategory.URGENT -> Color(0xFFFF453A) to Color(0x33FF453A)
+        TaskCategory.WORK -> NeonEmerald to Color(0x3300FF87)
+        TaskCategory.PERSONAL -> Color(0xFFBF5AF2) to Color(0x33BF5AF2)
+        TaskCategory.FINANCE -> NeonGold to Color(0x33FFD700)
+        TaskCategory.GENERAL -> Color(0xFF64D2FF) to Color(0x3364D2FF)
+    }
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(bgColor)
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = "${category.iconEmoji} ${category.titleAr}",
+            color = color,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NoAccounts
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
@@ -37,6 +39,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -298,6 +301,7 @@ fun PrivacyCenterDialog(
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(NeonEmerald.copy(alpha = 0.2f))
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
                                     Text("محمي 100%", color = NeonEmerald, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                 }
@@ -305,7 +309,71 @@ fun PrivacyCenterDialog(
                         )
                     }
 
-                    // Item 5: Official Privacy Policy Text
+                    // Item 5: Unrestricted Background Execution
+                    item {
+                        var isIgnored by remember {
+                            mutableStateOf(com.example.notifications.BackgroundReminderManager.isBatteryOptimizationIgnored(context))
+                        }
+
+                        PrivacySettingCard(
+                            icon = Icons.Default.NotificationsActive,
+                            iconTint = NeonEmerald,
+                            title = "التشغيل في الخلفية (Background Mode)",
+                            subtitle = "السماح بالعمل في الخلفية لإرسال تنبيهات المواعيد والمهام بدقة دون إيقاف التطبيق بواسطة موفر البطارية",
+                            trailing = {
+                                if (isIgnored) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(NeonEmerald.copy(alpha = 0.2f))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("نشط ⚡️", color = NeonEmerald, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = {
+                                            com.example.notifications.BackgroundReminderManager.requestIgnoreBatteryOptimization(context)
+                                            isIgnored = com.example.notifications.BackgroundReminderManager.isBatteryOptimizationIgnored(context)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = NeonEmerald, contentColor = Color.Black),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(34.dp)
+                                    ) {
+                                        Text("تفعيل", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    // Test Background Notification Button
+                    item {
+                        OutlinedButton(
+                            onClick = {
+                                com.example.notifications.BackgroundReminderManager.sendNotification(
+                                    context = context,
+                                    notificationId = 1001,
+                                    title = "تطبيق المهام يعمل في الخلفية ⚡️",
+                                    message = "تم تأكيد خاصية التشغيل في الخلفية بنجاح! ستصلك تنبيهات المواعيد في وقتها المحدد."
+                                )
+                                Toast.makeText(context, "تم إرسال إشعار تجريبي في الخلفية!", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                Icons.Default.NotificationsActive,
+                                contentDescription = null,
+                                tint = NeonEmerald,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("إرسال إشعار تجريبي لاختبار الخلفية 🔔", color = Color.White, fontSize = 12.sp)
+                        }
+                    }
+
+                    // Item 6: Official Privacy Policy Text
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),

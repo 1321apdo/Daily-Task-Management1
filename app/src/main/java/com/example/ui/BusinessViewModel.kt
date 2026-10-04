@@ -12,6 +12,7 @@ import com.example.model.AppointmentStatus
 import com.example.model.AppointmentType
 import com.example.model.FinanceTransaction
 import com.example.model.Priority
+import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import com.example.model.TransactionType
@@ -29,7 +30,9 @@ import kotlinx.coroutines.launch
 data class BusinessUiState(
     val taskSearchQuery: String = "",
     val taskFilterStatus: TaskStatus? = null,
+    val taskFilterCategory: TaskCategory? = null,
     val isAddTaskDialogOpen: Boolean = false,
+    val editingTask: TaskItem? = null,
     val isAddAppointmentDialogOpen: Boolean = false,
     val isAddTransactionDialogOpen: Boolean = false,
     val isPrivacyDialogOpen: Boolean = false,
@@ -58,7 +61,8 @@ class BusinessViewModel(
                     task.title.contains(state.taskSearchQuery, ignoreCase = true) ||
                     task.clientOrProject.contains(state.taskSearchQuery, ignoreCase = true)
             val matchesStatus = state.taskFilterStatus == null || task.status == state.taskFilterStatus
-            matchesQuery && matchesStatus
+            val matchesCategory = state.taskFilterCategory == null || task.category == state.taskFilterCategory
+            matchesQuery && matchesStatus && matchesCategory
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -105,8 +109,23 @@ class BusinessViewModel(
         _uiState.update { it.copy(taskFilterStatus = status) }
     }
 
+    fun setTaskFilterCategory(category: TaskCategory?) {
+        _uiState.update { it.copy(taskFilterCategory = category) }
+    }
+
     fun setAddTaskDialog(open: Boolean) {
         _uiState.update { it.copy(isAddTaskDialogOpen = open) }
+    }
+
+    fun setEditingTask(task: TaskItem?) {
+        _uiState.update { it.copy(editingTask = task) }
+    }
+
+    fun updateTask(task: TaskItem) {
+        viewModelScope.launch {
+            repository.updateTask(task)
+            setEditingTask(null)
+        }
     }
 
     fun setAddAppointmentDialog(open: Boolean) {
@@ -124,6 +143,7 @@ class BusinessViewModel(
         priority: Priority,
         dueDate: Long,
         clientOrProject: String,
+        category: TaskCategory = TaskCategory.WORK,
         activity: Activity? = null
     ) {
         viewModelScope.launch {
@@ -131,6 +151,7 @@ class BusinessViewModel(
                 TaskItem(
                     title = title,
                     description = description,
+                    category = category,
                     priority = priority,
                     dueDate = dueDate,
                     clientOrProject = clientOrProject
@@ -149,9 +170,6 @@ class BusinessViewModel(
                 TaskStatus.COMPLETED
             }
             repository.updateTaskStatus(task.id, newStatus)
-            if (newStatus == TaskStatus.COMPLETED && activity != null) {
-                AdMobManager.showInterstitialAd(activity)
-            }
         }
     }
 
@@ -174,7 +192,7 @@ class BusinessViewModel(
         activity: Activity? = null
     ) {
         viewModelScope.launch {
-            repository.insertAppointment(
+            val newId = repository.insertAppointment(
                 Appointment(
                     title = title,
                     clientName = clientName,
@@ -186,6 +204,18 @@ class BusinessViewModel(
                     notes = notes
                 )
             )
+
+            // Automatically schedule background alarm reminder for the appointment
+            if (activity != null && dateTime > System.currentTimeMillis()) {
+                com.example.notifications.BackgroundReminderManager.scheduleReminder(
+                    context = activity,
+                    reminderId = newId,
+                    title = "تذكير بموعد عمل: $title",
+                    message = "مع العميل: $clientName ($locationOrLink)",
+                    triggerAtMillis = dateTime
+                )
+            }
+
             setAddAppointmentDialog(false)
             activity?.let { AdMobManager.showInterstitialAd(it) }
         }

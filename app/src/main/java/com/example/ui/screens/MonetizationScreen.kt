@@ -390,6 +390,80 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
             }
         }
 
+        // AdMob Official Policy Compliance & Legal Monetization Guide
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1E16)),
+                border = BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.6f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = NeonEmerald.copy(alpha = 0.2f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Security,
+                                    contentDescription = null,
+                                    tint = NeonEmerald,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "دليل الربح القانوني والآمن مع Google AdMob",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = NeonEmerald
+                            )
+                            Text(
+                                text = "حماية كاملة لحسابك وضمان احتساب الأرباح 100%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFA5B8AD)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    PolicyRuleRow(
+                        number = "١",
+                        title = "منع النقر الذاتي (Zero Self-Clicking)",
+                        desc = "لا تنقر أبداً على إعلاناتك من هاتفك أو شبكتك المنزلية، فخوارزميات جوجل تكتشف ذلك فوراً وتغلق الحسابات المخالفة."
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    PolicyRuleRow(
+                        number = "٢",
+                        title = "التركيز على إعلانات المكافأة (Rewarded Ads)",
+                        desc = "أعلى أرباح قانونية (eCPM يصل إلى $40). يشاهد المستخدم الفيديو بمحض إرادته لكسب مزايا VIP دون أي إكراه أو تضليل."
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    PolicyRuleRow(
+                        number = "٣",
+                        title = "فواصل زمنية مقننة (Frequency Capping)",
+                        desc = "تم ضبط التطبيق برمجياً بفاصل 60 ثانية كحد أدنى للإعلانات البينية لمنع الإزعاج والنقرات العرضية غير المقصودة."
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    PolicyRuleRow(
+                        number = "٤",
+                        title = "وضع الاختبار الآمن أثناء التطوير",
+                        desc = "يتم استخدام معرفات الاختبار تلقائياً أثناء المعاينة لمنع تسجيل أي حركة مرور غير شرعية (Invalid Traffic)."
+                    )
+                }
+            }
+        }
+
         // Privacy & Protection Badge (100% Clean, zero developer private data)
         item {
             Card(
@@ -449,5 +523,43 @@ private fun VipBadge(title: String, active: Boolean) {
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium
         )
+    }
+}
+
+@Composable
+private fun PolicyRuleRow(number: String, title: String, desc: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = Color(0xFF1B3D2C),
+            modifier = Modifier.size(24.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = number,
+                    color = NeonEmerald,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = desc,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFA5B8AD),
+                lineHeight = 18.sp
+            )
+        }
     }
 }

@@ -16,9 +16,17 @@ enum class TaskStatus(val titleAr: String) {
     COMPLETED("مكتمل")
 }
 
+enum class TaskCategory(val titleAr: String, val iconEmoji: String) {
+    WORK("عمل", "💼"),
+    PERSONAL("شخصي", "👤"),
+    URGENT("طارئ", "🚨"),
+    FINANCE("مالي", "💰"),
+    GENERAL("عام", "📁")
+}
+
 /**
  * Room Database Schema Entity for Business Tasks
- * Stores business tasks, associated project names, deadlines, priority, and completion status.
+ * Stores business tasks, category, associated project names, deadlines, priority, and completion status.
  */
 @Entity(tableName = "tasks")
 data class TaskItem(
@@ -26,6 +34,7 @@ data class TaskItem(
     val id: Long = 0,
     val title: String,
     val description: String = "",
+    val category: TaskCategory = TaskCategory.WORK,
     val projectName: String = "",
     val deadline: Long = System.currentTimeMillis() + 86400000L,
     val status: TaskStatus = TaskStatus.PENDING,
