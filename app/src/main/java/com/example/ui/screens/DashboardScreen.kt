@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Language
@@ -152,10 +153,10 @@ fun DashboardScreen(
 
                 item {
                     GlowingKpiMetricCard(
-                        title = "عوائد AdMob التقديرية",
-                        value = displayAdMobEarnings,
-                        subtitle = "${adStats.totalImpressions} مشاهدة | ${adStats.clicks} نقرة",
-                        icon = Icons.Default.MonetizationOn,
+                        title = "رصيد مكافآت VIP",
+                        value = "${adStats.rewardPoints} نقطة",
+                        subtitle = "عضوية VIP نشطة ✨",
+                        icon = Icons.Default.CardGiftcard,
                         glowColor = NeonGold,
                         secondaryColor = Color(0xFFFFA000),
                         onClick = onNavigateToMonetization

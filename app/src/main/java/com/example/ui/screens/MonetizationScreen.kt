@@ -20,22 +20,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,116 +45,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ads.AdBannerView
-import com.example.ads.AdMobManager
 import com.example.ui.BusinessViewModel
-import java.util.Locale
+import com.example.ui.components.NeonEmerald
+import com.example.ui.components.NeonGold
 
 @Composable
 fun MonetizationScreen(viewModel: BusinessViewModel) {
     val context = LocalContext.current
     val activity = context as? Activity
-    val clipboardManager = LocalClipboardManager.current
     val adStats by viewModel.adStats.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .testTag("monetization_screen"),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 90.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Title & Brief
-        item {
-            Column {
-                Text(
-                    text = "مركز أرباح Google AdMob",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
-                )
-                Text(
-                    text = "معرفاتك الرسمية مشفرة ومدمجة بشكل دائم لحفظ أرباح الزوار لحسابك حصراً",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFA5B8AD)
-                )
-            }
-        }
-
-        // Active Banner on Monetization Page
+        // Banner Ad - Always generating recurring impressions & revenue
         item {
             AdBannerView()
         }
 
-        // Verified Account Banner with Tamper-Proof Lock
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF10281D)),
-                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = Color(0xFF16A34A),
-                        modifier = Modifier.size(46.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Verified,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "الأرباح مدمجة ومحمية ضد العبث (Tamper-Proof)",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF86EFAC)
-                            )
-                        )
-                        Text(
-                            text = "كافة زيارات وإعلانات التطبيق مربوطة تلقائياً بحساب الناشر الخاص بك",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFD1FAE5)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Earnings Analytics Card
+        // Golden VIP Member Card
         item {
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             Brush.linearGradient(
-                                listOf(Color(0xFF006D44), Color(0xFF0F766E))
+                                colors = listOf(
+                                    Color(0xFF132B20),
+                                    Color(0xFF0F472D),
+                                    Color(0xFF0A1F16)
+                                )
                             )
                         )
-                        .padding(18.dp)
+                        .padding(20.dp)
                 ) {
                     Column {
                         Row(
@@ -163,252 +101,326 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "تقدير عوائد الإعلانات المباشرة",
-                                color = Color.White.copy(alpha = 0.9f),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Icon(
-                                Icons.Default.MonetizationOn,
-                                contentDescription = null,
-                                tint = Color(0xFFFFD54F)
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = NeonGold.copy(alpha = 0.2f),
+                                    border = BorderStroke(1.dp, NeonGold),
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Default.WorkspacePremium,
+                                            contentDescription = null,
+                                            tint = NeonGold,
+                                            modifier = Modifier.size(26.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "عضوية VIP الذهبية",
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "مفعلة ونشطة لجميع المزايا",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = NeonEmerald
+                                    )
+                                }
+                            }
+
+                            // Points Pill
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color.Black.copy(alpha = 0.4f),
+                                border = BorderStroke(1.dp, NeonGold.copy(alpha = 0.6f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = NeonGold,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "${adStats.rewardPoints} نقطة",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Text(
-                                text = "${String.format(Locale.US, "%.2f", adStats.estimatedEarningsSar)} ر.س",
-                                color = Color.White,
-                                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "(${String.format(Locale.US, "%.2f", adStats.estimatedEarningsUsd)} USD)",
-                                color = Color.White.copy(alpha = 0.8f),
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(bottom = 6.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
+                        // Status perks preview
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            MetricSubItem("مشاهدات البانر", "${adStats.bannerImpressions}")
-                            MetricSubItem("إعلانات بينية", "${adStats.interstitialImpressions}")
-                            MetricSubItem("فيديو بمكافأة", "${adStats.rewardedImpressions}")
-                            MetricSubItem("النقرات", "${adStats.clicks}")
+                            VipBadge(title = "تصدير غير محدود", active = true)
+                            VipBadge(title = "أولويات المهام", active = true)
+                            VipBadge(title = "أمان وتشفير كامل", active = true)
                         }
                     }
                 }
             }
         }
 
-        // Interactive Ad Testing Action
+        // Section Title
         item {
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "تجربة الإعلانات المدمجة في التطبيق",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Text(
-                        text = "يمكنك اختبار الإعلان البيني (Interstitial) وفيديو المكافأة (Rewarded) للتأكد من سلاسة العرض",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                if (activity != null) {
-                                    viewModel.triggerInterstitialTest(activity)
-                                    Toast.makeText(context, "جاري فتح الإعلان البيني...", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("test_interstitial_button"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("إعلان بيني", fontSize = 12.sp)
-                        }
-
-                        Button(
-                            onClick = {
-                                if (activity != null) {
-                                    viewModel.triggerRewardedTest(activity) {
-                                        Toast.makeText(context, "🎉 مبروك! حصلت على 50 نقطة واشتراك VIP", Toast.LENGTH_LONG).show()
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("test_rewarded_button"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF10B981)
-                            )
-                        ) {
-                            Icon(Icons.Default.MonetizationOn, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("فيديو بمكافأة 💰", fontSize = 12.sp)
-                        }
-                    }
-                }
-            }
+            Text(
+                text = "طرق كسب النقاط وتمديد VIP مجاناً",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color.White
+            )
         }
 
-        // Locked & Verified Developer AdMob IDs (Tamper-Proof)
+        // Primary Rewarded Video Ad Card (The Developer's Top Earning Engine!)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1E17)),
-                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.4f))
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF14241C)),
+                border = BorderStroke(1.5.dp, NeonEmerald.copy(alpha = 0.7f))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Surface(
                             shape = CircleShape,
-                            color = Color(0xFF10B981).copy(alpha = 0.15f),
-                            modifier = Modifier.size(36.dp)
+                            color = NeonEmerald.copy(alpha = 0.15f),
+                            modifier = Modifier.size(46.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    Icons.Default.Lock,
+                                    Icons.Default.PlayCircle,
                                     contentDescription = null,
-                                    tint = Color(0xFF10B981),
-                                    modifier = Modifier.size(20.dp)
+                                    tint = NeonEmerald,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "معرفات الأرباح مدمجة ومحمية بصفة دائمة",
+                                text = "شاهد فيديو قصير (30 ثانية) 🎬",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.White
                             )
                             Text(
-                                text = "مشفرة ضد التعديل لحفظ جميع أرباح الزوار لحسابك الشخصي حصراً",
+                                text = "اكسب 50 نقطة فورية + تجديد صلاحية VIP لمدة 24 ساعة",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFA7F3D0)
+                                color = Color(0xFFA5B8AD)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    IdRow(
-                        label = "معرف تطبيق AdMob (App ID) [محمي ومدمج]:",
-                        value = AdMobManager.USER_APP_ID,
-                        onCopy = {
-                            clipboardManager.setText(AnnotatedString(AdMobManager.USER_APP_ID))
-                            Toast.makeText(context, "تم نسخ معرف التطبيق", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    IdRow(
-                        label = "معرف إعلان البانر (Banner ID) [نشط ومدمج]:",
-                        value = AdMobManager.USER_BANNER_ID,
-                        onCopy = {
-                            clipboardManager.setText(AnnotatedString(AdMobManager.USER_BANNER_ID))
-                            Toast.makeText(context, "تم نسخ معرف البانر", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    IdRow(
-                        label = "معرف الإعلان البيني (Interstitial ID) [نشط ومدمج]:",
-                        value = AdMobManager.USER_INTERSTITIAL_ID,
-                        onCopy = {
-                            clipboardManager.setText(AnnotatedString(AdMobManager.USER_INTERSTITIAL_ID))
-                            Toast.makeText(context, "تم نسخ معرف الإعلان البيني", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    IdRow(
-                        label = "معرف إعلان المكافأة (Rewarded Video ID) [نشط ومدمج]:",
-                        value = AdMobManager.USER_REWARDED_ID,
-                        onCopy = {
-                            clipboardManager.setText(AnnotatedString(AdMobManager.USER_REWARDED_ID))
-                            Toast.makeText(context, "تم نسخ معرف إعلان المكافأة", Toast.LENGTH_SHORT).show()
-                        }
-                    )
+                    Button(
+                        onClick = {
+                            if (activity != null) {
+                                viewModel.triggerRewardedTest(activity) {
+                                    Toast.makeText(context, "🎉 رائع! تمت إضافة 50 نقطة وتفعيل مزايا VIP بنجاح!", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("watch_rewarded_video_button"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = NeonEmerald,
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.PlayCircle, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "مشاهدة الفيديو وكسب 50 نقطة 💰",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }
 
-        // Checklist for Maximizing Profit
+        // Secondary Interstitial Ad Action (Support & Speed Boost)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF14241C)),
+                border = BorderStroke(1.dp, Color(0xFF244434))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = NeonGold.copy(alpha = 0.15f),
+                            modifier = Modifier.size(46.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.FlashOn,
+                                    contentDescription = null,
+                                    tint = NeonGold,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "دعم التطبيق وتسريع الإنجاز ⚡️",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White
+                            )
+                            Text(
+                                text = "تخطي أي فترات انتظار وإضافة 20 نقطة لرصيدك",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFA5B8AD)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = {
+                            if (activity != null) {
+                                viewModel.triggerInterstitialTest(activity)
+                                Toast.makeText(context, "تم تفعيل التسريع وإضافة 20 نقطة لرصيدك!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp)
+                            .testTag("boost_speed_button"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A2E),
+                            contentColor = NeonEmerald
+                        ),
+                        border = BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.FlashOn, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "تفعيل الدعم والتسريع (+20 نقطة)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Daily Login Bonus
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF111E18))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.TrendingUp,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color(0xFF1B3828),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.CardGiftcard,
+                                contentDescription = null,
+                                tint = NeonGold,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "خطة تحقيق الأرباح وأمان حسابك",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            text = "المكافأة اليومية",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                        Text(
+                            text = "افتح التطبيق يومياً للحصول على 15 نقطة مجانية مستمرة",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFA5B8AD)
                         )
                     }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = NeonGold.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = "+15",
+                            color = NeonGold,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    ProfitChecklistItem(
-                        number = "1",
-                        title = "القاعدة الذهبية: الاختبار الآمن (Test Ads)",
-                        desc = "التطبيق مضبوط تلقائياً على 'وضع الاختبار الآمن' أثناء التطوير والتجربة. هذا يحمي حسابك من تقييد جوجل بسبب النقرات الذاتية غير الصالحة."
+        // Privacy & Protection Badge (100% Clean, zero developer private data)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1813)),
+                border = BorderStroke(1.dp, Color(0xFF163324))
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.VerifiedUser,
+                        contentDescription = null,
+                        tint = NeonEmerald,
+                        modifier = Modifier.size(24.dp)
                     )
-
-                    ProfitChecklistItem(
-                        number = "2",
-                        title = "تقديم قيمة حقيقية تدفع المستخدم للعودة يومياً",
-                        desc = "التطبيق يوفر إدارة متكاملة للمهام، والمواعيد، والمالية، ونظام مكافآت VIP لتحفيز المستخدمين على التفاعل اليومي وزيادة ظهور الإعلانات العضوية."
-                    )
-
-                    ProfitChecklistItem(
-                        number = "3",
-                        title = "نشر التطبيق على GitHub و Google Play",
-                        desc = "التطبيق جاهز للنشر العام. المعرفات مدمجة ومغلقة في الكود بحيث تذهب 100% من عوائد الزوار إلى رصيدك الشخصي مباشرة."
-                    )
-
-                    ProfitChecklistItem(
-                        number = "4",
-                        title = "اكتمال الثلاثي الإعلاني (بانر + بيني + مكافأة)",
-                        desc = "تم بنجاح ربط جميع المعرفات (Banner, Interstitial, Rewarded) لتحقيق أقصى عائد ممكن eCPM لكل 1000 ظهور."
-                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "بياناتك وخصوصيتك محمية 100%",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                        Text(
+                            text = "يعمل التطبيق بنظام الحفظ المحلي المشفر دون تخزين أي سجلات خارجية",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFA5B8AD)
+                        )
+                    }
                 }
             }
         }
@@ -416,85 +428,26 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
 }
 
 @Composable
-private fun MetricSubItem(label: String, value: String) {
-    Column {
-        Text(text = label, color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp)
-        Text(text = value, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun IdRow(label: String, value: String, onCopy: () -> Unit) {
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(
-                onClick = onCopy,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    Icons.Default.ContentCopy,
-                    contentDescription = "نسخ",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfitChecklistItem(number: String, title: String, desc: String) {
+private fun VipBadge(title: String, active: Boolean) {
     Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.Top
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.Black.copy(alpha = 0.35f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-            modifier = Modifier.size(24.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = number,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = desc,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Icon(
+            Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = NeonEmerald,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }

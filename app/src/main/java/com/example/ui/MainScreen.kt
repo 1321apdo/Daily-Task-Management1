@@ -10,15 +10,16 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -89,10 +90,10 @@ fun MainScreen(viewModel: BusinessViewModel) {
                             Text(
                                 text = when (uiState.selectedTab) {
                                     0 -> stringResource(R.string.app_name)
-                                    1 -> "إدارة وتنظيم المهام"
-                                    2 -> "جدولة مواعيد العمل"
-                                    3 -> "الأرباح والمالية"
-                                    4 -> "أرباح إعلانات AdMob"
+                                    1 -> "المهام اليومية"
+                                    2 -> "جدولة المواعيد"
+                                    3 -> "المالية والأرباح"
+                                    4 -> "مكافآت VIP"
                                     else -> stringResource(R.string.app_name)
                                 },
                                 style = MaterialTheme.typography.titleLarge.copy(
@@ -126,14 +127,16 @@ fun MainScreen(viewModel: BusinessViewModel) {
                                 )
                             }
 
-                            // Floating Reward Game Button in Top Bar
-                            FloatingRewardPill(
-                                onClick = { isRewardGameDialogOpen = true },
-                                modifier = Modifier.padding(end = 4.dp)
-                            )
+                            // Floating Reward Game Button in Top Bar (shown on tabs 0-3)
+                            if (uiState.selectedTab != 4) {
+                                FloatingRewardPill(
+                                    onClick = { isRewardGameDialogOpen = true },
+                                    modifier = Modifier.padding(end = 4.dp)
+                                )
+                            }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color(0xFF0F1A15).copy(alpha = 0.85f),
+                            containerColor = Color(0xFF0F1A15).copy(alpha = 0.95f),
                             titleContentColor = Color.White
                         )
                     )
@@ -209,8 +212,8 @@ fun MainScreen(viewModel: BusinessViewModel) {
                         NavigationBarItem(
                             selected = uiState.selectedTab == 4,
                             onClick = { viewModel.selectTab(4) },
-                            icon = { Icon(Icons.Default.MonetizationOn, contentDescription = "AdMob") },
-                            label = { Text("AdMob") },
+                            icon = { Icon(Icons.Default.CardGiftcard, contentDescription = "المكافآت") },
+                            label = { Text("المكافآت") },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.Black,
                                 indicatorColor = NeonGold,
@@ -218,7 +221,7 @@ fun MainScreen(viewModel: BusinessViewModel) {
                                 unselectedIconColor = Color(0xFF8B9D93),
                                 unselectedTextColor = Color(0xFF8B9D93)
                             ),
-                            modifier = Modifier.testTag("nav_tab_admob")
+                            modifier = Modifier.testTag("nav_tab_rewards")
                         )
                     }
                 }
