@@ -133,7 +133,7 @@ object AdMobManager {
             interstitialImpressions = 5,
             rewardedImpressions = 3,
             clicks = 7,
-            isTestMode = true,
+            isTestMode = false, // Live production mode for real users and visitors
             customBannerId = USER_BANNER_ID,
             customAppId = USER_APP_ID,
             customInterstitialId = USER_INTERSTITIAL_ID,
@@ -143,31 +143,17 @@ object AdMobManager {
     )
     val adStats: StateFlow<AdMobStats> = _adStats.asStateFlow()
 
+    // Tamper-proof unit IDs locked directly to the developer account
     fun getBannerAdUnitId(): String {
-        val current = _adStats.value
-        return if (!current.isTestMode && current.customBannerId.isNotBlank()) {
-            current.customBannerId
-        } else {
-            TEST_BANNER_ID
-        }
+        return if (isRunningOnEmulator()) TEST_BANNER_ID else USER_BANNER_ID
     }
 
     fun getInterstitialAdUnitId(): String {
-        val current = _adStats.value
-        return if (!current.isTestMode && current.customInterstitialId.isNotBlank()) {
-            current.customInterstitialId
-        } else {
-            TEST_INTERSTITIAL_ID
-        }
+        return if (isRunningOnEmulator()) TEST_INTERSTITIAL_ID else USER_INTERSTITIAL_ID
     }
 
     fun getRewardedAdUnitId(): String {
-        val current = _adStats.value
-        return if (!current.isTestMode && current.customRewardedId.isNotBlank()) {
-            current.customRewardedId
-        } else {
-            TEST_REWARDED_ID
-        }
+        return if (isRunningOnEmulator()) TEST_REWARDED_ID else USER_REWARDED_ID
     }
 
     fun recordBannerImpression() {
@@ -196,24 +182,22 @@ object AdMobManager {
     }
 
     fun updateConfig(
-        isTestMode: Boolean,
-        customBannerId: String,
-        customInterstitialId: String,
-        customRewardedId: String,
-        customAppId: String
+        isTestMode: Boolean = false,
+        customBannerId: String = USER_BANNER_ID,
+        customInterstitialId: String = USER_INTERSTITIAL_ID,
+        customRewardedId: String = USER_REWARDED_ID,
+        customAppId: String = USER_APP_ID
     ) {
+        // Enforce hardcoded developer IDs to protect owner's monetization permanently
         _adStats.update {
             it.copy(
-                isTestMode = isTestMode,
-                customBannerId = customBannerId,
-                customInterstitialId = customInterstitialId,
-                customRewardedId = customRewardedId,
-                customAppId = customAppId
+                isTestMode = isRunningOnEmulator(),
+                customBannerId = USER_BANNER_ID,
+                customInterstitialId = USER_INTERSTITIAL_ID,
+                customRewardedId = USER_REWARDED_ID,
+                customAppId = USER_APP_ID
             )
         }
-        interstitialAd = null
-        rewardedAd = null
-        rewardedInterstitialAd = null
     }
 
     fun loadInterstitialAd(context: Context) {
