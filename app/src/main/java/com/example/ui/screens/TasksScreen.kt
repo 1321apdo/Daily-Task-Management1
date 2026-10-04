@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import android.app.Activity
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,9 +24,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -33,11 +37,14 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -63,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ads.AdBannerView
+import com.example.ads.AdMobManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.model.TaskCategory
@@ -115,18 +123,62 @@ fun TasksScreen(viewModel: BusinessViewModel) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Text(
-                    text = "تنظيم وإدارة المهام",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-                Text(
-                    text = "تتبع إنجاز المشاريع والمهام لتحقيق أقصى إنتاجية وأرباح",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFA5B8AD)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "تنظيم وإدارة المهام",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        )
+                        Text(
+                            text = "تتبع إنجاز المشاريع والمهام بأعلى كفاءة وإنتاجية",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFA5B8AD)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            val reportBuilder = StringBuilder()
+                            reportBuilder.append("📋 تقرير المهام اليومية\n")
+                            reportBuilder.append("التاريخ: ${java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale("ar")).format(java.util.Date())}\n")
+                            reportBuilder.append("إجمالي المهام: ${allTasks.size} | المكتملة: ${allTasks.count { it.status == TaskStatus.COMPLETED }}\n")
+                            reportBuilder.append("============================\n\n")
+                            allTasks.forEach { task ->
+                                val statusMark = if (task.status == TaskStatus.COMPLETED) "✅ [مكتملة]" else "⏳ [قيد التنفيذ]"
+                                reportBuilder.append("$statusMark ${task.title}\n")
+                                reportBuilder.append("   • التصنيف: ${task.category.titleAr} | الأولوية: ${task.priority.titleAr}\n")
+                                if (task.description.isNotBlank()) {
+                                    reportBuilder.append("   • الملاحظات: ${task.description}\n")
+                                }
+                                reportBuilder.append("\n")
+                            }
+                            reportBuilder.append("تم التصدير بنجاح عبر تطبيق إدارة المهام اليومية ✨")
+
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "تقرير المهام اليومية")
+                                putExtra(Intent.EXTRA_TEXT, reportBuilder.toString())
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "تصدير ومشاركة تقرير المهام"))
+                            AdMobManager.addRewardPoints(3)
+                            Toast.makeText(context, "تم تصدير التقرير بنجاح وإضافة +3 نقاط لرصيدك! 🎉", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonEmerald),
+                        border = BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.6f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("تصدير التقرير", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
