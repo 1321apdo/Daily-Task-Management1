@@ -93,8 +93,7 @@ fun MainScreen(viewModel: BusinessViewModel) {
                                     0 -> stringResource(R.string.app_name)
                                     1 -> "المهام اليومية"
                                     2 -> "جدولة المواعيد"
-                                    3 -> "المالية والأرباح"
-                                    4 -> "مكافآت VIP"
+                                    3 -> "كسب النقاط والجوائز"
                                     else -> stringResource(R.string.app_name)
                                 },
                                 style = MaterialTheme.typography.titleLarge.copy(
@@ -128,8 +127,8 @@ fun MainScreen(viewModel: BusinessViewModel) {
                                 )
                             }
 
-                            // Floating Reward Game Button in Top Bar (shown on tabs 0-3)
-                            if (uiState.selectedTab != 4) {
+                            // Floating Reward Game Button in Top Bar (shown on tabs 0-2)
+                            if (uiState.selectedTab != 3) {
                                 FloatingRewardPill(
                                     onClick = { isRewardGameDialogOpen = true },
                                     modifier = Modifier.padding(end = 4.dp)
@@ -198,23 +197,8 @@ fun MainScreen(viewModel: BusinessViewModel) {
                         NavigationBarItem(
                             selected = uiState.selectedTab == 3,
                             onClick = { viewModel.selectTab(3) },
-                            icon = { Icon(Icons.Default.AccountBalanceWallet, contentDescription = "الأرباح") },
-                            label = { Text("الأرباح") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color.Black,
-                                indicatorColor = NeonEmerald,
-                                selectedTextColor = NeonEmerald,
-                                unselectedIconColor = Color(0xFF8B9D93),
-                                unselectedTextColor = Color(0xFF8B9D93)
-                            ),
-                            modifier = Modifier.testTag("nav_tab_finance")
-                        )
-
-                        NavigationBarItem(
-                            selected = uiState.selectedTab == 4,
-                            onClick = { viewModel.selectTab(4) },
-                            icon = { Icon(Icons.Default.CardGiftcard, contentDescription = "المكافآت") },
-                            label = { Text("المكافآت") },
+                            icon = { Icon(Icons.Default.CardGiftcard, contentDescription = "كسب النقاط") },
+                            label = { Text("كسب النقاط") },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.Black,
                                 indicatorColor = NeonGold,
@@ -237,13 +221,11 @@ fun MainScreen(viewModel: BusinessViewModel) {
                             viewModel = viewModel,
                             onNavigateToTasks = { viewModel.selectTab(1) },
                             onNavigateToAppointments = { viewModel.selectTab(2) },
-                            onNavigateToFinance = { viewModel.selectTab(3) },
-                            onNavigateToMonetization = { viewModel.selectTab(4) }
+                            onNavigateToMonetization = { viewModel.selectTab(3) }
                         )
                         1 -> TasksScreen(viewModel = viewModel)
                         2 -> AppointmentsScreen(viewModel = viewModel)
-                        3 -> FinanceScreen(viewModel = viewModel)
-                        4 -> MonetizationScreen(viewModel = viewModel)
+                        3 -> MonetizationScreen(viewModel = viewModel)
                     }
                 }
             }

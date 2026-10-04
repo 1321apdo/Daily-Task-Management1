@@ -91,30 +91,17 @@ fun DashboardScreen(
     viewModel: BusinessViewModel,
     onNavigateToTasks: () -> Unit,
     onNavigateToAppointments: () -> Unit,
-    onNavigateToFinance: () -> Unit,
     onNavigateToMonetization: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
     val allTasks by viewModel.allTasks.collectAsStateWithLifecycle()
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsStateWithLifecycle()
-    val totalRevenue by viewModel.totalRevenue.collectAsStateWithLifecycle()
-    val totalExpenses by viewModel.totalExpenses.collectAsStateWithLifecycle()
     val adStats by viewModel.adStats.collectAsStateWithLifecycle()
-    val privacySettings by viewModel.privacyManager.settings.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val netProfit = totalRevenue - totalExpenses
     val pendingTasksCount = allTasks.count { it.status != TaskStatus.COMPLETED }
     val completedTasksCount = allTasks.count { it.status == TaskStatus.COMPLETED }
-
-    val currencyFormatter = NumberFormat.getNumberInstance(Locale("ar", "SA")).apply {
-        maximumFractionDigits = 0
-    }
-
-    val displayNetProfit = if (privacySettings.isDiscreetMode) "•••• ر.س" else "${currencyFormatter.format(netProfit)} ر.س"
-    val displayTotalRevenue = if (privacySettings.isDiscreetMode) "••••" else "${currencyFormatter.format(totalRevenue)} ر.س"
-    val displayAdMobEarnings = if (privacySettings.isDiscreetMode) "•••• ر.س" else "${String.format(Locale.US, "%.2f", adStats.estimatedEarningsSar)} ر.س"
 
     LazyColumn(
         modifier = Modifier
@@ -135,7 +122,7 @@ fun DashboardScreen(
         // Floating Luminous KPI Cards Row
         item {
             Text(
-                text = "مؤشرات الأداء المالي والتشغيلي",
+                text = "مؤشرات الإنتاجية وجمع النقاط",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -149,21 +136,9 @@ fun DashboardScreen(
             ) {
                 item {
                     GlowingKpiMetricCard(
-                        title = "صافي الأرباح",
-                        value = displayNetProfit,
-                        subtitle = "إيرادات: $displayTotalRevenue",
-                        icon = Icons.Default.TrendingUp,
-                        glowColor = NeonEmerald,
-                        secondaryColor = Color(0xFF00BFA5),
-                        onClick = onNavigateToFinance
-                    )
-                }
-
-                item {
-                    GlowingKpiMetricCard(
-                        title = "رصيد مكافآت VIP",
+                        title = "محفظة النقاط",
                         value = "${adStats.rewardPoints} نقطة",
-                        subtitle = "عضوية VIP نشطة ✨",
+                        subtitle = "جاهزة للاستبدال والسحب 💰",
                         icon = Icons.Default.CardGiftcard,
                         glowColor = NeonGold,
                         secondaryColor = Color(0xFFFFA000),
@@ -173,10 +148,23 @@ fun DashboardScreen(
 
                 item {
                     GlowingKpiMetricCard(
-                        title = "المهام المعلقة",
-                        value = "$pendingTasksCount مهمة",
-                        subtitle = "$completedTasksCount مهمة منجزة",
+                        title = "المهام اليومية",
+                        value = "$pendingTasksCount متبقية",
+                        subtitle = "$completedTasksCount مهمة مكتملة ✨",
                         icon = Icons.Default.Assignment,
+                        glowColor = NeonEmerald,
+                        secondaryColor = Color(0xFF00BFA5),
+                        onClick = onNavigateToTasks
+                    )
+                }
+
+                item {
+                    val productivity = if (allTasks.isNotEmpty()) (completedTasksCount * 100 / allTasks.size) else 100
+                    GlowingKpiMetricCard(
+                        title = "معدل الإنجاز",
+                        value = "$productivity%",
+                        subtitle = "أداء وإنتاجية يومية 🚀",
+                        icon = Icons.Default.TrendingUp,
                         glowColor = Color(0xFF00E5FF),
                         secondaryColor = Color(0xFF2979FF),
                         onClick = onNavigateToTasks
@@ -203,7 +191,6 @@ fun DashboardScreen(
             QuickActionsBar(
                 onAddTask = { viewModel.setAddTaskDialog(true) },
                 onAddAppointment = { viewModel.setAddAppointmentDialog(true) },
-                onAddTransaction = { viewModel.setAddTransactionDialog(true) },
                 onMonetization = onNavigateToMonetization
             )
         }
@@ -491,7 +478,7 @@ private fun ExecutiveHeader() {
         ) {
             Column {
                 Text(
-                    text = "مرحباً بك في إدارة الأعمال",
+                    text = "مرحباً بك في إدارة المهام اليومية",
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )
@@ -596,7 +583,6 @@ private fun GlowingKpiMetricCard(
 private fun QuickActionsBar(
     onAddTask: () -> Unit,
     onAddAppointment: () -> Unit,
-    onAddTransaction: () -> Unit,
     onMonetization: () -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -628,17 +614,17 @@ private fun QuickActionsBar(
                 onClick = onAddAppointment
             )
             GlowActionButton(
-                title = "مالية",
-                icon = Icons.Default.AttachMoney,
+                title = "فيديو +50",
+                icon = Icons.Default.CardGiftcard,
                 modifier = Modifier.weight(1f),
                 glowColor = NeonGold,
-                onClick = onAddTransaction
+                onClick = onMonetization
             )
             GlowActionButton(
-                title = "AdMob",
-                icon = Icons.Default.MonetizationOn,
+                title = "النقاط",
+                icon = Icons.Default.TrendingUp,
                 modifier = Modifier.weight(1f),
-                glowColor = Color(0xFFFF5252),
+                glowColor = Color(0xFFE040FB),
                 onClick = onMonetization
             )
         }
