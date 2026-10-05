@@ -404,16 +404,39 @@ fun PrivacyCenterDialog(
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Text(
                                         text = """
-1. خصوصية البيانات: نؤكد أن تطبيق "إدارة المهام اليومية" يتبنى مبدأ الخصوصية أولاً (Privacy by Design). لا يتم بيع أو مشاركة أي بيانات شخصية مع أي جهة خارجية.
-2. التخزين المحلي: تُحفظ كافة السجلات المالية والمهام والمواعيد محلياً على جهاز المستخدم باستخدام مكتبة SQLite Room المشفرة.
-3. الإعلانات والامتثال: تتوافق الإعلانات المعروضة مع سياسات Google Play Developer وسياسات Google AdMob للخصوصية والامتثال لقوانين حماية البيانات (GDPR/CCPA).
-4. حقوق المستخدم: للمستخدم الحق الكامل في حذف كافة بياناته، أو تفعيل قفل الأمان الشخصي (PIN) في أي وقت بضغطة زر.
+1. خصوصية البيانات: نؤكد أن تطبيق "إدارة المهام اليومية (Task Master)" يتبنى مبدأ الخصوصية أولاً (Privacy by Design). لا يتم بيع أو مشاركة أي بيانات شخصية مع أي جهة خارجية.
+2. التخزين المحلي: تُحفظ كافة المهام والمواعيد محلياً على جهاز المستخدم حصراً باستخدام قاعدة بيانات SQLite Room المشفرة.
+3. الامتثال لمتاجر التطبيقات: تتوافق سياسة الخصوصية مع متطلبات متجر أمازون للتطبيقات (Amazon Appstore Developer Policy) وسياسات Google AdMob للخصوصية ولوائح GDPR/CCPA.
+4. الإعلانات التابعة لـ AdMob: يستخدم التطبيق إعلانات Google AdMob الرسمية وتخضع لمعايير الأمان الدولية.
+5. حقوق المستخدم: للمستخدم الحق الكامل في حذف كافة بياناته أو تفعيل قفل الأمان الشخصي (PIN) في أي وقت.
+6. البريد الإلكتروني للتواصل: apdo1321@gmail.com
                                         """.trimIndent(),
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = Color(0xFFCBD5E1),
                                             lineHeight = 18.sp
                                         )
                                     )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    OutlinedButton(
+                                        onClick = {
+                                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                            val clip = android.content.ClipData.newPlainText("Privacy Policy", """
+سياسة الخصوصية - تطبيق إدارة المهام اليومية (Task Master)
+اسم الحزمة: com.aistudio.taskmaster.kpzrqx
+البريد: apdo1321@gmail.com
+
+تطبيق إدارة المهام اليومية يحفظ جميع البيانات محلياً على الجهاز بشكل مشفر.
+يستخدم التطبيق شبكة Google AdMob لعرض الإعلانات بما يتوافق مع سياسات متجر أمازون للتطبيقات (Amazon Appstore) وقوانين حماية البيانات GDPR/CCPA.
+                                            """.trimIndent())
+                                            clipboard.setPrimaryClip(clip)
+                                            Toast.makeText(context, "تم نسخ نص سياسة الخصوصية للحافظة بنجاح! 📋", Toast.LENGTH_SHORT).show()
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonEmerald),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("نسخ سياسة الخصوصية لمتجر أمازون 📋", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }
