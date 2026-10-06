@@ -24,7 +24,7 @@ class PrivacyManager(context: Context) {
             isDiscreetMode = prefs.getBoolean(KEY_DISCREET_MODE, false),
             isNonPersonalizedAds = prefs.getBoolean(KEY_NON_PERSONALIZED_ADS, true),
             isDataEncryptedLocally = true,
-            isAppLocked = prefs.getBoolean(KEY_PIN_ENABLED, false)
+            isAppLocked = false // Ensure interface always opens immediately to Dashboard
         )
     )
     val settings: StateFlow<PrivacySettings> = _settings.asStateFlow()

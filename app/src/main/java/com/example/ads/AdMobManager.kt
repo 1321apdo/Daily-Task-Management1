@@ -2,6 +2,7 @@ package com.example.ads
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.ads.AdError
@@ -51,10 +52,10 @@ object AdMobManager {
     private const val TAG = "AdMobManager"
 
     // Real Google AdMob IDs extracted from user's AdMob console
-    const val USER_APP_ID = "ca-app-pub-8214981197698574~3120736280"
-    const val USER_BANNER_ID = "ca-app-pub-8214981197698574/8333534513" // Banner_HomeScreen (كل الأسعار - أعلى نسبة ظهور)
-    const val USER_INTERSTITIAL_ID = "ca-app-pub-8214981197698574/4793744758" // Interstitial Ads (إعلان بيني رسمي بملء الشاشة)
-    const val USER_REWARDED_ID = "ca-app-pub-8214981197698574/1352216821" // Rewards-money-app (إعلان بيني مقابل مكافأة)
+    const val USER_APP_ID = "ca-app-pub-8214981197698574~7842643561"
+    const val USER_BANNER_ID = "ca-app-pub-8214981197698574/5962449630" // New Ad Unit from AdMob Console
+    const val USER_INTERSTITIAL_ID = "ca-app-pub-8214981197698574/5962449630"
+    const val USER_REWARDED_ID = "ca-app-pub-8214981197698574/5962449630"
 
     // Standard Google AdMob Official Test Unit IDs for safe preview testing
     const val TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
@@ -144,41 +145,93 @@ object AdMobManager {
     )
     val adStats: StateFlow<AdMobStats> = _adStats.asStateFlow()
 
-    // Tamper-proof unit IDs locked directly to the developer account
+    private const val PREFS_NAME = "user_admob_rewards_prefs"
+    private const val KEY_POINTS = "user_reward_points"
+    private const val KEY_VIP_UNTIL = "vip_unlocked_until"
+    private const val KEY_BANNER_IMP = "banner_impressions"
+    private const val KEY_INTERSTITIAL_IMP = "interstitial_impressions"
+    private const val KEY_REWARDED_IMP = "rewarded_impressions"
+    private const val KEY_CLICKS = "ad_clicks"
+    private var prefs: SharedPreferences? = null
+
+    fun initialize(context: Context) {
+        if (prefs == null) {
+            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val savedPoints = prefs?.getInt(KEY_POINTS, 250) ?: 250
+            val savedVipUntil = prefs?.getLong(KEY_VIP_UNTIL, 0L) ?: 0L
+            val savedBanner = prefs?.getInt(KEY_BANNER_IMP, 18) ?: 18
+            val savedInterstitial = prefs?.getInt(KEY_INTERSTITIAL_IMP, 5) ?: 5
+            val savedRewarded = prefs?.getInt(KEY_REWARDED_IMP, 3) ?: 3
+            val savedClicks = prefs?.getInt(KEY_CLICKS, 7) ?: 7
+
+            _adStats.update {
+                it.copy(
+                    rewardPoints = savedPoints,
+                    vipUnlockedUntilMs = savedVipUntil,
+                    bannerImpressions = savedBanner,
+                    interstitialImpressions = savedInterstitial,
+                    rewardedImpressions = savedRewarded,
+                    clicks = savedClicks,
+                    isTestMode = false
+                )
+            }
+        }
+    }
+
+    // Tamper-proof unit IDs locked directly to developer real live commercial ad account
     fun getBannerAdUnitId(): String {
-        return if (isRunningOnEmulator()) TEST_BANNER_ID else USER_BANNER_ID
+        return USER_BANNER_ID
     }
 
     fun getInterstitialAdUnitId(): String {
-        return if (isRunningOnEmulator()) TEST_INTERSTITIAL_ID else USER_INTERSTITIAL_ID
+        return USER_INTERSTITIAL_ID
     }
 
     fun getRewardedAdUnitId(): String {
-        return if (isRunningOnEmulator()) TEST_REWARDED_ID else USER_REWARDED_ID
+        return USER_REWARDED_ID
     }
 
     fun recordBannerImpression() {
-        _adStats.update { it.copy(bannerImpressions = it.bannerImpressions + 1) }
+        val newCount = _adStats.value.bannerImpressions + 1
+        prefs?.edit()?.putInt(KEY_BANNER_IMP, newCount)?.apply()
+        _adStats.update { it.copy(bannerImpressions = newCount) }
     }
 
     fun recordInterstitialImpression() {
-        _adStats.update { it.copy(interstitialImpressions = it.interstitialImpressions + 1) }
+        val newCount = _adStats.value.interstitialImpressions + 1
+        prefs?.edit()?.putInt(KEY_INTERSTITIAL_IMP, newCount)?.apply()
+        _adStats.update { it.copy(interstitialImpressions = newCount) }
     }
 
     fun recordRewardedImpression() {
-        _adStats.update { it.copy(rewardedImpressions = it.rewardedImpressions + 1) }
+        val newCount = _adStats.value.rewardedImpressions + 1
+        prefs?.edit()?.putInt(KEY_REWARDED_IMP, newCount)?.apply()
+        _adStats.update { it.copy(rewardedImpressions = newCount) }
     }
 
     fun recordClick() {
-        _adStats.update { it.copy(clicks = it.clicks + 1) }
+        val newCount = _adStats.value.clicks + 1
+        prefs?.edit()?.putInt(KEY_CLICKS, newCount)?.apply()
+        _adStats.update { it.copy(clicks = newCount) }
     }
 
     fun addRewardPoints(points: Int) {
-        _adStats.update { it.copy(rewardPoints = it.rewardPoints + points) }
+        val newPoints = (_adStats.value.rewardPoints + points).coerceAtLeast(0)
+        prefs?.edit()?.putInt(KEY_POINTS, newPoints)?.apply()
+        _adStats.update { it.copy(rewardPoints = newPoints) }
+    }
+
+    fun spendPoints(points: Int): Boolean {
+        if (_adStats.value.rewardPoints < points) return false
+        val newPoints = _adStats.value.rewardPoints - points
+        prefs?.edit()?.putInt(KEY_POINTS, newPoints)?.apply()
+        _adStats.update { it.copy(rewardPoints = newPoints) }
+        return true
     }
 
     fun unlockVip(hours: Int = 24) {
         val until = System.currentTimeMillis() + (hours * 3600 * 1000L)
+        prefs?.edit()?.putLong(KEY_VIP_UNTIL, until)?.apply()
         _adStats.update { it.copy(vipUnlockedUntilMs = until) }
     }
 
@@ -192,7 +245,7 @@ object AdMobManager {
         // Enforce hardcoded developer IDs to protect owner's monetization permanently
         _adStats.update {
             it.copy(
-                isTestMode = isRunningOnEmulator(),
+                isTestMode = false,
                 customBannerId = USER_BANNER_ID,
                 customInterstitialId = USER_INTERSTITIAL_ID,
                 customRewardedId = USER_REWARDED_ID,

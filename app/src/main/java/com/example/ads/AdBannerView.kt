@@ -49,16 +49,14 @@ fun AdBannerView(
 ) {
     val isEmulator = remember { AdMobManager.isRunningOnEmulator() }
     var isAdLoaded by remember { mutableStateOf(false) }
-    var hasFailed by remember { mutableStateOf(isEmulator) }
+    var hasFailed by remember { mutableStateOf(false) }
     var readyToLoadAdView by remember { mutableStateOf(false) }
     val adUnitId = remember { AdMobManager.getBannerAdUnitId() }
 
-    // If on a physical device, wait until initial screen render is complete before inflating AdView
+    // Wait until initial screen render is complete before inflating AdView for instant UI open
     LaunchedEffect(Unit) {
-        if (!isEmulator) {
-            delay(1500)
-            readyToLoadAdView = true
-        }
+        delay(1000)
+        readyToLoadAdView = true
     }
 
     Box(
@@ -67,8 +65,8 @@ fun AdBannerView(
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Only attempt to mount native AdView on real devices after initial UI paint
-        if (!hasFailed && readyToLoadAdView && !isEmulator) {
+        // Mount native AdView when ready on real devices
+        if (!hasFailed && readyToLoadAdView && !AdMobManager.isRunningOnEmulator()) {
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,8 +107,8 @@ fun AdBannerView(
             )
         }
 
-        // Fast, beautiful business sponsor banner fallback (loads in 0ms, never blocks the UI)
-        if ((hasFailed || isEmulator || !readyToLoadAdView) && showFallbackIfFailed) {
+        // Fast, beautiful business sponsor banner fallback (loads in 0ms, never blocks the UI or invokes Mesa)
+        if ((hasFailed || !isAdLoaded || AdMobManager.isRunningOnEmulator()) && showFallbackIfFailed) {
             AdFallbackCard(
                 onClick = {
                     AdMobManager.recordClick()

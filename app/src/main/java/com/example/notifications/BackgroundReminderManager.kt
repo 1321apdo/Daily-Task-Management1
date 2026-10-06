@@ -40,33 +40,18 @@ object BackgroundReminderManager {
     }
 
     fun isBatteryOptimizationIgnored(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
-        } else {
-            true
-        }
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        return powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
     }
 
     fun requestIgnoreBatteryOptimization(context: Context) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val intent = Intent().apply {
-                    action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-                    data = Uri.parse("package:${context.packageName}")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                context.startActivity(intent)
+            // Compliant with Play Store & Amazon Appstore policy: open user settings page instead of direct request
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-        } catch (_: Exception) {
-            try {
-                // Fallback to general battery settings
-                val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                context.startActivity(fallbackIntent)
-            } catch (_: Exception) {}
-        }
+            context.startActivity(intent)
+        } catch (_: Exception) {}
     }
 
     fun scheduleReminder(
@@ -93,19 +78,11 @@ object BackgroundReminderManager {
         )
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerAtMillis,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerAtMillis,
-                    pendingIntent
-                )
-            }
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pendingIntent
+            )
         } catch (_: SecurityException) {
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,

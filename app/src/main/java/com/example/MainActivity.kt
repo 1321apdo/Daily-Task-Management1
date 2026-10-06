@@ -27,13 +27,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Request notification permission for background execution on Android 13+
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-            }
-        }
-
         setContent {
             MyApplicationTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -42,10 +35,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Request notification permission smoothly after UI has already rendered
+        lifecycleScope.launch {
+            try {
+                delay(1500)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+                    }
+                }
+            } catch (_: Throwable) {}
+        }
+
         // Delay ad preloading so the initial user interface opens instantly with 0 freeze
         lifecycleScope.launch {
             try {
-                delay(3000)
+                delay(2000)
                 if (!AdMobManager.isRunningOnEmulator()) {
                     AdMobManager.loadInterstitialAd(this@MainActivity)
                     AdMobManager.loadRewardedAd(this@MainActivity)

@@ -167,6 +167,7 @@ class BusinessViewModel(
             val newStatus = if (task.status == TaskStatus.COMPLETED) {
                 TaskStatus.PENDING
             } else {
+                AdMobManager.addRewardPoints(25) // Earn real reward points for completing task!
                 TaskStatus.COMPLETED
             }
             repository.updateTaskStatus(task.id, newStatus)
@@ -286,6 +287,10 @@ class BusinessViewModel(
             onRewardEarned()
         }
     }
+
+    fun spendRewardPoints(points: Int): Boolean = AdMobManager.spendPoints(points)
+    fun addRewardPoints(points: Int) = AdMobManager.addRewardPoints(points)
+    fun unlockVip(hours: Int = 24) = AdMobManager.unlockVip(hours)
 
     fun setPrivacyDialog(isOpen: Boolean) {
         _uiState.update { it.copy(isPrivacyDialogOpen = isOpen) }

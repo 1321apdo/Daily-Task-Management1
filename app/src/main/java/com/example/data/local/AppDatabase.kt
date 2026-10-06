@@ -35,15 +35,26 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "business_manager_database"
-                )
-                    .fallbackToDestructiveMigration()
-                    .build()
-                INSTANCE = instance
-                instance
+                try {
+                    val instance = Room.databaseBuilder(
+                        context.applicationContext,
+                        AppDatabase::class.java,
+                        "business_manager_database"
+                    )
+                        .fallbackToDestructiveMigration(true)
+                        .build()
+                    INSTANCE = instance
+                    instance
+                } catch (_: Throwable) {
+                    val fallback = Room.inMemoryDatabaseBuilder(
+                        context.applicationContext,
+                        AppDatabase::class.java
+                    )
+                        .fallbackToDestructiveMigration(true)
+                        .build()
+                    INSTANCE = fallback
+                    fallback
+                }
             }
         }
 

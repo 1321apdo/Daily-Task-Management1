@@ -153,10 +153,9 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                val estimatedValUsd = (adStats.rewardPoints / 1000.0)
                                 Text(
-                                    text = "القيمة النقدية: ≈ ${String.format(Locale.US, "%.2f", estimatedValUsd)} دولار أمريكي",
-                                    color = NeonEmerald,
+                                    text = if (adStats.isVipActive) "حالة العضوية: VIP تنفيذي نشط ✨" else "حالة العضوية: عضو قياسي",
+                                    color = if (adStats.isVipActive) NeonGold else NeonEmerald,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -171,23 +170,23 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                                 shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier.testTag("redeem_points_button")
                             ) {
-                                Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.WorkspacePremium, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("سحب الأرباح", fontWeight = FontWeight.Bold)
+                                Text("استبدال بمزايا VIP", fontWeight = FontWeight.Bold)
                             }
                         }
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // High Profit Margin Cashout Goal (5,000 points = 5$)
-                        val targetPoints = 5000
+                        // Real User Engagement Goal (1,000 points = Diamond VIP Status)
+                        val targetPoints = 1000
                         val progress = (adStats.rewardPoints.toFloat() / targetPoints).coerceIn(0f, 1f)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "الهدف للسحب: 5,000 نقطة (5$ كاش)",
+                                text = "الهدف: 1,000 نقطة لترقية باقة VIP الماسية",
                                 fontSize = 12.sp,
                                 color = Color(0xFFA5B8AD)
                             )
@@ -320,7 +319,7 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
         // Section Title: Ways to Earn Points
         item {
             Text(
-                text = "طرق كسب النقاط اليومية لربح المال 💰",
+                text = "طرق كسب النقاط اليومية وترقية حسابك إلى VIP 🌟",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = Color.White
             )
@@ -609,7 +608,7 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
             }
         }
 
-        // 7. Calibrated High Profit Margin Exchange Table (جدول استبدال عالي الربحية)
+        // 7. VIP In-App Digital Perks Tiers Table (100% Compliant with Google AdMob & Play Store)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -619,10 +618,10 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Payment, contentDescription = null, tint = NeonGold, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Default.WorkspacePremium, contentDescription = null, tint = NeonGold, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "جدول أسعار استبدال النقاط بأموال حقيقية 💵",
+                            text = "باقات ترقية VIP الرقمية الحصرية 💎",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = NeonGold
                         )
@@ -630,16 +629,18 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    ExchangeRateRow(points = "5,000 نقطة", reward = "5.00$ دولار", method = "رصيد PayPal أو بطاقة Google Play")
+                    ExchangeRateRow(points = "100 نقطة", reward = "VIP 24 ساعة", method = "تفعيل الميزات المتقدمة وتصدير البيانات")
                     Spacer(modifier = Modifier.height(8.dp))
-                    ExchangeRateRow(points = "10,000 نقطة", reward = "10.00$ دولار", method = "حوالة بنكية أو محفظة كاش")
+                    ExchangeRateRow(points = "250 نقطة", reward = "VIP 48 ساعة", method = "تصفح هادئ فائق السرعة بدون أي فواصل")
                     Spacer(modifier = Modifier.height(8.dp))
-                    ExchangeRateRow(points = "20,000 نقطة", reward = "25.00$ دولار (+5$ بونص)", method = "سحب فوري VIP مباشر")
+                    ExchangeRateRow(points = "500 نقطة", reward = "تصدير دائم", method = "فتح تصدير تقارير المشاريع والـ PDF مدى الحياة")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ExchangeRateRow(points = "1,000 نقطة", reward = "عضوية ماسية", method = "شارة المدير التنفيذي وتشفير كامل للبيانات")
                 }
             }
         }
 
-        // 8. Legitimate Strategy Explanation for Visitors
+        // 8. Google AdMob Global Policy Compliance Guarantee
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -660,12 +661,12 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "استراتيجية الربح النزيه والقانوني 100%",
+                            text = "امتثال كامل لسياسات Google AdMob العالمية",
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = Color.White
                         )
                         Text(
-                            text = "يتم تمويل المكافآت من عوائد الرعاة والإعلانات الرسمية المعتمدة، ويتم توزيعها على المستخدمين النشطين بنزاهة وشفافية.",
+                            text = "كافة العوائد الإعلانية تذهب للمطور رسمياً في حسابه البنكي، ونقاط المكافآت تمنح المستخدم مزايا رقمية حقيقية داخل التطبيق لحماية الحساب من أي مخالفات.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFFA5B8AD)
                         )
@@ -675,22 +676,146 @@ fun MonetizationScreen(viewModel: BusinessViewModel) {
         }
     }
 
-    // Cashout / Redeem Dialog
+    // VIP Perk Unlock / Redeem Dialog
     if (isRedeemDialogOpen) {
-        RedeemDialog(
+        RedeemVipDialog(
             currentPoints = adStats.rewardPoints,
             onDismiss = { isRedeemDialogOpen = false },
-            onConfirmRedeem = { method, account, points ->
-                if (adStats.rewardPoints >= points) {
-                    AdMobManager.addRewardPoints(-points)
+            onConfirmRedeem = { perkName, costPoints, hours ->
+                if (viewModel.spendRewardPoints(costPoints)) {
+                    viewModel.unlockVip(hours)
                     isRedeemDialogOpen = false
-                    Toast.makeText(context, "✅ تم تسجيل طلب السحب بقيمة $method إلى $account بنجاح! ستصلك الحوالة خلال 24-48 ساعة عمل.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "🎉 رائع! تم استبدال النقاط وتفعيل ميزة $perkName بنجاح!", Toast.LENGTH_LONG).show()
                 } else {
-                    Toast.makeText(context, "عذراً، الحد الأدنى للسحب هو 5,000 نقطة ورصيدك الحالي غير كافٍ!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "عذراً، رصيدك الحالي (${adStats.rewardPoints}) غير كافٍ لتفعيل هذه الباقة!", Toast.LENGTH_SHORT).show()
                 }
             }
         )
     }
+}
+
+@Composable
+private fun RedeemVipDialog(
+    currentPoints: Int,
+    onDismiss: () -> Unit,
+    onConfirmRedeem: (perkName: String, costPoints: Int, hours: Int) -> Unit
+) {
+    var selectedPerkIndex by remember { mutableStateOf(0) }
+
+    val perks = listOf(
+        Triple("اشتراك VIP التنفيذي (24 ساعة)", 100, 24),
+        Triple("تصفح فائق السرعة بدون فواصل (48 ساعة)", 250, 48),
+        Triple("فتح تصدير التقارير و PDF الدائم", 500, 168),
+        Triple("العضوية الماسية والسمات الملكية", 1000, 720)
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "استبدال النقاط بمزايا VIP",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "إلغاء")
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    text = "رصيدك الحالي: $currentPoints نقطة ⭐",
+                    color = NeonEmerald,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+
+                Text(
+                    text = "اختر الباقة الرقمية التي تريد تفعيلها:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    perks.forEachIndexed { index, (name, cost, _) ->
+                        val isSelected = selectedPerkIndex == index
+                        val isAffordable = currentPoints >= cost
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) NeonEmerald.copy(alpha = 0.18f) else Color(0xFF132019),
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) NeonEmerald else Color(0xFF20382B)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = name,
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = if (isSelected) NeonEmerald else Color.White
+                                    )
+                                    Text(
+                                        text = "التكلفة: $cost نقطة",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isAffordable) NeonGold else Color(0xFFE57373)
+                                    )
+                                }
+                                Button(
+                                    onClick = { selectedPerkIndex = index },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isSelected) NeonEmerald else Color(0xFF1B3828),
+                                        contentColor = if (isSelected) Color.Black else Color.White
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(if (isSelected) "محدد ✓" else "اختيار", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            val selected = perks[selectedPerkIndex]
+            Button(
+                onClick = {
+                    onConfirmRedeem(selected.first, selected.second, selected.third)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonGold,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("تأكيد التفعيل الآن", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("إلغاء")
+            }
+        },
+        shape = RoundedCornerShape(16.dp)
+    )
 }
 
 @Composable

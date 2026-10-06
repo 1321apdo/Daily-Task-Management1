@@ -23,69 +23,72 @@ object RewardGameManager {
     val state: StateFlow<RewardGameState> = _state.asStateFlow()
 
     fun tapToEarn(activity: Activity? = null) {
-        _state.update { current ->
-            val pointsEarned = (10 * current.multiplier).toInt()
-            val newTotalTaps = current.totalTaps + 1
-            val newPoints = current.points + pointsEarned
-            val newStreak = current.streak + 1
+        val current = _state.value
+        val pointsEarned = (10 * current.multiplier).toInt()
+        val newTotalTaps = current.totalTaps + 1
+        val newStreak = current.streak + 1
 
-            val newMultiplier = when {
-                newStreak >= 30 -> 3.5
-                newStreak >= 20 -> 2.5
-                newStreak >= 10 -> 2.0
-                newStreak >= 5 -> 1.5
-                else -> 1.0
-            }
-
-            val newLevel = when {
-                newPoints >= 2500 -> "ملياردير أعمال 💎"
-                newPoints >= 1000 -> "مدير تنفيذي 🥇"
-                newPoints >= 500 -> "محترف أعمال 🥈"
-                else -> "رائد أعمال صاعد 🥉"
-            }
-
-            val remainingChest = if (current.nextChestTapsRemaining <= 1) 15 else current.nextChestTapsRemaining - 1
-
-            current.copy(
-                points = newPoints,
-                streak = newStreak,
-                multiplier = newMultiplier,
-                totalTaps = newTotalTaps,
-                lastEarnedAmount = pointsEarned,
-                nextChestTapsRemaining = remainingChest,
-                levelName = newLevel
-            )
+        val newMultiplier = when {
+            newStreak >= 30 -> 3.5
+            newStreak >= 20 -> 2.5
+            newStreak >= 10 -> 2.0
+            newStreak >= 5 -> 1.5
+            else -> 1.0
         }
 
-        // Trigger AdMob every 5 taps milestone to maximize legal revenue!
-        if (_state.value.totalTaps % 5 == 0 && activity != null) {
+        // Add real persistent points to AdMobManager
+        AdMobManager.addRewardPoints(pointsEarned)
+        val newPoints = AdMobManager.adStats.value.rewardPoints
+
+        val newLevel = when {
+            newPoints >= 2500 -> "ملياردير أعمال 💎"
+            newPoints >= 1000 -> "مدير تنفيذي 🥇"
+            newPoints >= 500 -> "محترف أعمال 🥈"
+            else -> "رائد أعمال صاعد 🥉"
+        }
+
+        val remainingChest = if (current.nextChestTapsRemaining <= 1) 15 else current.nextChestTapsRemaining - 1
+
+        _state.value = current.copy(
+            points = newPoints,
+            streak = newStreak,
+            multiplier = newMultiplier,
+            totalTaps = newTotalTaps,
+            lastEarnedAmount = pointsEarned,
+            nextChestTapsRemaining = remainingChest,
+            levelName = newLevel
+        )
+
+        // Trigger safe interstitial ad with cooldown to protect ad policy
+        if (newTotalTaps % 15 == 0 && activity != null) {
             AdMobManager.showInterstitialAd(activity)
         }
     }
 
     fun openMysteryChest(activity: Activity? = null) {
-        val chestBonus = 250
-        _state.update { current ->
-            current.copy(
-                points = current.points + chestBonus,
-                chestsOpened = current.chestsOpened + 1,
-                nextChestTapsRemaining = 20,
-                lastEarnedAmount = chestBonus
-            )
-        }
-        activity?.let { AdMobManager.showInterstitialAd(it, force = true) }
+        val chestBonus = 100
+        AdMobManager.addRewardPoints(chestBonus)
+        val current = _state.value
+        _state.value = current.copy(
+            points = AdMobManager.adStats.value.rewardPoints,
+            chestsOpened = current.chestsOpened + 1,
+            nextChestTapsRemaining = 20,
+            lastEarnedAmount = chestBonus
+        )
+        activity?.let { AdMobManager.showInterstitialAd(it) }
     }
 
     fun watchAdForBonus(activity: Activity) {
-        AdMobManager.showInterstitialAd(activity, force = true) {
-            _state.update { current ->
-                val bonus = 500
-                current.copy(
-                    points = current.points + bonus,
-                    multiplier = 3.0,
-                    lastEarnedAmount = bonus
-                )
-            }
+        // Officially compliant with Google AdMob Rewarded Ad Policy
+        AdMobManager.showRewardedAd(activity) {
+            val bonus = 150
+            AdMobManager.addRewardPoints(bonus)
+            val current = _state.value
+            _state.value = current.copy(
+                points = AdMobManager.adStats.value.rewardPoints,
+                multiplier = 3.0,
+                lastEarnedAmount = bonus
+            )
         }
     }
 }
