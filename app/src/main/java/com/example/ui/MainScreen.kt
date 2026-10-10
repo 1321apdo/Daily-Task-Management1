@@ -9,15 +9,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,12 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.ads.AdMobManager
@@ -62,6 +70,7 @@ import com.example.ui.screens.AppointmentsScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.FinanceScreen
 import com.example.ui.screens.MonetizationScreen
+import com.example.ui.screens.StoreScreen
 import com.example.ui.screens.TasksScreen
 import com.example.ui.security.PinLockScreen
 import com.example.ui.security.PrivacyCenterDialog
@@ -69,11 +78,22 @@ import com.example.ui.security.PrivacyCenterDialog
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: BusinessViewModel) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val privacySettings by viewModel.privacyManager.settings.collectAsStateWithLifecycle()
     val showSimulatedInterstitial by AdMobManager.showSimulatedInterstitial.collectAsStateWithLifecycle()
     val showSimulatedRewarded by AdMobManager.showSimulatedRewarded.collectAsStateWithLifecycle()
+    val cartCount by viewModel.cartTotalCount.collectAsStateWithLifecycle()
     var isRewardGameDialogOpen by remember { mutableStateOf(false) }
+
+    // Display store feedback notifications
+    LaunchedEffect(uiState.storeUserFeedbackMessage) {
+        uiState.storeUserFeedbackMessage?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            viewModel.setStoreFeedback(null)
+        }
+    }
 
     // Back handling: if on secondary tab, return to Dashboard first
     BackHandler(enabled = uiState.selectedTab != 0) {
@@ -93,7 +113,8 @@ fun MainScreen(viewModel: BusinessViewModel) {
                                     0 -> stringResource(R.string.app_name)
                                     1 -> "المهام اليومية"
                                     2 -> "جدولة المواعيد"
-                                    3 -> "كسب النقاط والجوائز"
+                                    3 -> "متجر GitHub البرمجي"
+                                    4 -> "كسب النقاط والجوائز"
                                     else -> stringResource(R.string.app_name)
                                 },
                                 style = MaterialTheme.typography.titleLarge.copy(
@@ -103,6 +124,18 @@ fun MainScreen(viewModel: BusinessViewModel) {
                             )
                         },
                         actions = {
+                            // Firebase Cloud Account Button
+                            IconButton(
+                                onClick = { viewModel.setAuthDialog(true) },
+                                modifier = Modifier.testTag("action_cloud_account")
+                            ) {
+                                Icon(
+                                    imageVector = if (currentUser != null) Icons.Default.CloudDone else Icons.Default.AccountCircle,
+                                    contentDescription = "حساب Firebase السحابي",
+                                    tint = if (currentUser != null) NeonEmerald else Color.White
+                                )
+                            }
+
                             // Discreet Mode (Hide numbers toggle)
                             IconButton(
                                 onClick = { viewModel.privacyManager.toggleDiscreetMode() },
@@ -127,8 +160,8 @@ fun MainScreen(viewModel: BusinessViewModel) {
                                 )
                             }
 
-                            // Floating Reward Game Button in Top Bar (shown on tabs 0-2)
-                            if (uiState.selectedTab != 3) {
+                            // Floating Reward Game Button in Top Bar (shown on tabs other than Rewards)
+                            if (uiState.selectedTab != 4) {
                                 FloatingRewardPill(
                                     onClick = { isRewardGameDialogOpen = true },
                                     modifier = Modifier.padding(end = 4.dp)
@@ -197,6 +230,35 @@ fun MainScreen(viewModel: BusinessViewModel) {
                         NavigationBarItem(
                             selected = uiState.selectedTab == 3,
                             onClick = { viewModel.selectTab(3) },
+                            icon = {
+                                if (cartCount > 0) {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge(containerColor = NeonGold, contentColor = Color.Black) {
+                                                Text("$cartCount", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Storefront, contentDescription = "المتجر")
+                                    }
+                                } else {
+                                    Icon(Icons.Default.Storefront, contentDescription = "المتجر")
+                                }
+                            },
+                            label = { Text("المتجر") },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color.Black,
+                                indicatorColor = NeonEmerald,
+                                selectedTextColor = NeonEmerald,
+                                unselectedIconColor = Color(0xFF8B9D93),
+                                unselectedTextColor = Color(0xFF8B9D93)
+                            ),
+                            modifier = Modifier.testTag("nav_tab_store")
+                        )
+
+                        NavigationBarItem(
+                            selected = uiState.selectedTab == 4,
+                            onClick = { viewModel.selectTab(4) },
                             icon = { Icon(Icons.Default.CardGiftcard, contentDescription = "كسب النقاط") },
                             label = { Text("كسب النقاط") },
                             colors = NavigationBarItemDefaults.colors(
@@ -221,11 +283,13 @@ fun MainScreen(viewModel: BusinessViewModel) {
                             viewModel = viewModel,
                             onNavigateToTasks = { viewModel.selectTab(1) },
                             onNavigateToAppointments = { viewModel.selectTab(2) },
-                            onNavigateToMonetization = { viewModel.selectTab(3) }
+                            onNavigateToMonetization = { viewModel.selectTab(4) },
+                            onNavigateToStore = { viewModel.selectTab(3) }
                         )
                         1 -> TasksScreen(viewModel = viewModel)
                         2 -> AppointmentsScreen(viewModel = viewModel)
-                        3 -> MonetizationScreen(viewModel = viewModel)
+                        3 -> StoreScreen(viewModel = viewModel)
+                        4 -> MonetizationScreen(viewModel = viewModel)
                     }
                 }
             }
@@ -300,6 +364,21 @@ fun MainScreen(viewModel: BusinessViewModel) {
                     privacyManager = viewModel.privacyManager,
                     onDismiss = { viewModel.setPrivacyDialog(false) }
                 )
+            }
+
+            // Firebase Cloud Authentication Dialog
+            if (uiState.isAuthDialogOpen && viewModel.authRepository != null) {
+                androidx.compose.ui.window.Dialog(
+                    onDismissRequest = { viewModel.setAuthDialog(false) },
+                    properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        com.example.ui.auth.AuthScreen(
+                            authRepository = viewModel.authRepository,
+                            onContinueAsGuest = { viewModel.setAuthDialog(false) }
+                        )
+                    }
+                }
             }
 
             // High Security PIN Lock Screen (covers entire UI when app is locked)

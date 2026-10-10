@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.ads.AdMobManager
 import com.example.ads.AdMobStats
+import com.example.data.repository.AuthRepository
 import com.example.data.repository.BusinessRepository
+import com.example.data.repository.FirestoreRepository
 import com.example.model.Appointment
 import com.example.model.AppointmentStatus
 import com.example.model.AppointmentType
@@ -16,7 +18,9 @@ import com.example.model.TaskCategory
 import com.example.model.TaskItem
 import com.example.model.TaskStatus
 import com.example.model.TransactionType
+import com.example.model.UserProfile
 import com.example.security.PrivacyManager
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,16 +40,34 @@ data class BusinessUiState(
     val isAddAppointmentDialogOpen: Boolean = false,
     val isAddTransactionDialogOpen: Boolean = false,
     val isPrivacyDialogOpen: Boolean = false,
-    val selectedTab: Int = 0 // 0: Dashboard, 1: Tasks, 2: Appointments, 3: Finance, 4: AdMob
+    val isAuthDialogOpen: Boolean = false,
+    val selectedTab: Int = 0, // 0: Dashboard, 1: Tasks, 2: Appointments, 3: Store, 4: Rewards
+    // GitHub Developer Store UI States
+    val storeSearchQuery: String = "",
+    val storeSelectedCategory: com.example.store.model.StoreCategory = com.example.store.model.StoreCategory.ALL,
+    val storeSubTab: Int = 0, // 0: Storefront, 1: Cart, 2: Merchant Studio, 3: Orders & Licenses
+    val isAddProductDialogOpen: Boolean = false,
+    val selectedProductForDetail: com.example.store.model.StoreProduct? = null,
+    val isCheckoutDialogOpen: Boolean = false,
+    val isGitHubConnectDialogOpen: Boolean = false,
+    val isConnectingGitHub: Boolean = false,
+    val storeUserFeedbackMessage: String? = null
 )
 
 class BusinessViewModel(
     private val repository: BusinessRepository,
-    val privacyManager: PrivacyManager
+    val privacyManager: PrivacyManager,
+    val authRepository: AuthRepository? = null,
+    val firestoreRepository: FirestoreRepository? = null,
+    val storeRepository: com.example.store.StoreRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BusinessUiState())
     val uiState: StateFlow<BusinessUiState> = _uiState.asStateFlow()
+
+    val currentUser: StateFlow<FirebaseUser?> = (authRepository?.authStateFlow()
+        ?: MutableStateFlow(null))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), authRepository?.currentUser)
 
     val adStats: StateFlow<AdMobStats> = AdMobManager.adStats
 
@@ -296,14 +318,202 @@ class BusinessViewModel(
         _uiState.update { it.copy(isPrivacyDialogOpen = isOpen) }
     }
 
+    fun setAuthDialog(isOpen: Boolean) {
+        _uiState.update { it.copy(isAuthDialogOpen = isOpen) }
+    }
+
+    fun syncPointsWithCloud() {
+        val user = currentUser.value ?: return
+        val currentStats = adStats.value
+        viewModelScope.launch(Dispatchers.IO) {
+            firestoreRepository?.syncPointsToCloud(
+                userId = user.uid,
+                points = currentStats.rewardPoints.toLong(),
+                vipUntilMs = currentStats.vipUnlockedUntilMs
+            )
+        }
+    }
+
+    fun signOut() {
+        authRepository?.signOut()
+    }
+
+    // ==========================================
+    // GITHUB DEVELOPER STORE STATE & ACTIONS
+    // ==========================================
+
+    val storeProfile: StateFlow<com.example.store.model.GitHubStoreProfile> = (storeRepository?.storeProfile
+        ?: MutableStateFlow(com.example.store.model.GitHubStoreProfile()))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), com.example.store.model.GitHubStoreProfile())
+
+    val storeProducts: StateFlow<List<com.example.store.model.StoreProduct>> = (storeRepository?.products
+        ?: MutableStateFlow(emptyList()))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val cartItems: StateFlow<List<com.example.store.model.CartItem>> = (storeRepository?.cartItems
+        ?: MutableStateFlow(emptyList()))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val storeOrders: StateFlow<List<com.example.store.model.StoreOrder>> = (storeRepository?.orders
+        ?: MutableStateFlow(emptyList()))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val filteredStoreProducts: StateFlow<List<com.example.store.model.StoreProduct>> = combine(
+        storeProducts,
+        _uiState
+    ) { products, state ->
+        products.filter { product ->
+            val matchesCategory = state.storeSelectedCategory == com.example.store.model.StoreCategory.ALL ||
+                    product.category == state.storeSelectedCategory
+            val matchesQuery = state.storeSearchQuery.isBlank() ||
+                    product.title.contains(state.storeSearchQuery, ignoreCase = true) ||
+                    product.tagline.contains(state.storeSearchQuery, ignoreCase = true) ||
+                    product.language.contains(state.storeSearchQuery, ignoreCase = true)
+            matchesCategory && matchesQuery
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val cartTotalCount: StateFlow<Int> = cartItems.combine(_uiState) { items, _ ->
+        items.sumOf { it.quantity }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val cartSubtotal: StateFlow<Double> = cartItems.combine(_uiState) { items, _ ->
+        items.sumOf { it.subtotal }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    fun setStoreSubTab(subTab: Int) {
+        _uiState.update { it.copy(storeSubTab = subTab) }
+    }
+
+    fun setStoreSearchQuery(query: String) {
+        _uiState.update { it.copy(storeSearchQuery = query) }
+    }
+
+    fun setStoreCategory(category: com.example.store.model.StoreCategory) {
+        _uiState.update { it.copy(storeSelectedCategory = category) }
+    }
+
+    fun setAddProductDialog(isOpen: Boolean) {
+        _uiState.update { it.copy(isAddProductDialogOpen = isOpen) }
+    }
+
+    fun setSelectedProductForDetail(product: com.example.store.model.StoreProduct?) {
+        _uiState.update { it.copy(selectedProductForDetail = product) }
+    }
+
+    fun setCheckoutDialog(isOpen: Boolean) {
+        _uiState.update { it.copy(isCheckoutDialogOpen = isOpen) }
+    }
+
+    fun setGitHubConnectDialog(isOpen: Boolean) {
+        _uiState.update { it.copy(isGitHubConnectDialogOpen = isOpen) }
+    }
+
+    fun setStoreFeedback(message: String?) {
+        _uiState.update { it.copy(storeUserFeedbackMessage = message) }
+    }
+
+    fun connectGitHubAccount(username: String, onFinished: (Boolean, String) -> Unit = { _, _ -> }) {
+        _uiState.update { it.copy(isConnectingGitHub = true) }
+        viewModelScope.launch {
+            val result = storeRepository?.connectGitHubUser(username)
+            _uiState.update { it.copy(isConnectingGitHub = false, isGitHubConnectDialogOpen = false) }
+            if (result != null && result.isSuccess) {
+                val profile = result.getOrNull()
+                setStoreFeedback("تم ربط متجرك بنجاح مع حساب GitHub: ${profile?.username}")
+                onFinished(true, "تم الربط بنجاح!")
+            } else {
+                setStoreFeedback("تعذر الاتصال بـ GitHub أو الحساب غير متاح")
+                onFinished(false, "تعذر الاتصال بحساب GitHub")
+            }
+        }
+    }
+
+    fun importGitHubRepositories(onFinished: (Int) -> Unit = {}) {
+        val currentUsername = storeProfile.value.username
+        if (currentUsername.isBlank()) {
+            setStoreFeedback("يرجى ربط حسابك على GitHub أولاً")
+            setGitHubConnectDialog(true)
+            return
+        }
+        viewModelScope.launch {
+            val imported = storeRepository?.importRepositoriesFromGitHub(currentUsername) ?: 0
+            setStoreFeedback("تم استيراد $imported مستودع من GitHub وإضافتها لمتجرك بنجاح!")
+            onFinished(imported)
+        }
+    }
+
+    fun addNewProductToStore(product: com.example.store.model.StoreProduct) {
+        storeRepository?.addProduct(product)
+        setAddProductDialog(false)
+        setStoreFeedback("تم نشر المنتج '${product.title}' في متجرك بنجاح!")
+    }
+
+    fun deleteProductFromStore(productId: String) {
+        storeRepository?.deleteProduct(productId)
+        setStoreFeedback("تم حذف المنتج من المتجر")
+    }
+
+    fun addProductToCart(product: com.example.store.model.StoreProduct, license: String = "رخصة تجارية كاملة") {
+        storeRepository?.addToCart(product, license)
+        setStoreFeedback("تمت إضافة '${product.title}' إلى سلة المشتريات")
+    }
+
+    fun updateCartItemQuantity(productId: String, quantity: Int) {
+        storeRepository?.updateCartItemQuantity(productId, quantity)
+    }
+
+    fun removeProductFromCart(productId: String) {
+        storeRepository?.removeFromCart(productId)
+    }
+
+    fun clearCart() {
+        storeRepository?.clearCart()
+    }
+
+    fun completeCheckout(
+        paymentMethod: String,
+        customerEmail: String,
+        coinsDiscountApplied: Double = 0.0,
+        coinsSpent: Int = 0
+    ): com.example.store.model.StoreOrder? {
+        if (coinsSpent > 0) {
+            spendRewardPoints(coinsSpent)
+        }
+        val order = storeRepository?.checkout(
+            paymentMethod = paymentMethod,
+            customerEmail = customerEmail,
+            discountApplied = coinsDiscountApplied
+        )
+        if (order != null) {
+            setCheckoutDialog(false)
+            setStoreFeedback("تمت عملية الشراء بنجاح! تم إصدار ترخيصك الفوري")
+        }
+        return order
+    }
+
+    fun disconnectGitHubStore() {
+        storeRepository?.disconnectGitHub()
+        setStoreFeedback("تم فصل حساب GitHub")
+    }
+
     class Factory(
         private val repository: BusinessRepository,
-        private val privacyManager: PrivacyManager
+        private val privacyManager: PrivacyManager,
+        private val authRepository: AuthRepository? = null,
+        private val firestoreRepository: FirestoreRepository? = null,
+        private val storeRepository: com.example.store.StoreRepository? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(BusinessViewModel::class.java)) {
-                return BusinessViewModel(repository, privacyManager) as T
+                return BusinessViewModel(
+                    repository = repository,
+                    privacyManager = privacyManager,
+                    authRepository = authRepository,
+                    firestoreRepository = firestoreRepository,
+                    storeRepository = storeRepository
+                ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

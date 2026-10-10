@@ -5,7 +5,9 @@ import android.os.Build
 import android.webkit.WebView
 import com.example.ads.AdMobManager
 import com.example.data.local.AppDatabase
+import com.example.data.repository.AuthRepository
 import com.example.data.repository.BusinessRepository
+import com.example.data.repository.FirestoreRepository
 import com.example.security.PrivacyManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
@@ -18,6 +20,9 @@ class BusinessApplication : Application() {
     val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
     val repository: BusinessRepository by lazy { BusinessRepository(database.businessDao()) }
     val privacyManager: PrivacyManager by lazy { PrivacyManager.getInstance(this) }
+    val authRepository: AuthRepository by lazy { AuthRepository() }
+    val firestoreRepository: FirestoreRepository by lazy { FirestoreRepository(this) }
+    val storeRepository: com.example.store.StoreRepository by lazy { com.example.store.StoreRepository(this) }
 
     override fun onCreate() {
         super.onCreate()

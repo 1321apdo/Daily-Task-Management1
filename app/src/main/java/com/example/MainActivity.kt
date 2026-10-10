@@ -20,7 +20,13 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: BusinessViewModel by viewModels {
         val app = application as BusinessApplication
-        BusinessViewModel.Factory(app.repository, app.privacyManager)
+        BusinessViewModel.Factory(
+            repository = app.repository,
+            privacyManager = app.privacyManager,
+            authRepository = app.authRepository,
+            firestoreRepository = app.firestoreRepository,
+            storeRepository = app.storeRepository
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -91,13 +92,15 @@ fun DashboardScreen(
     viewModel: BusinessViewModel,
     onNavigateToTasks: () -> Unit,
     onNavigateToAppointments: () -> Unit,
-    onNavigateToMonetization: () -> Unit
+    onNavigateToMonetization: () -> Unit,
+    onNavigateToStore: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
     val allTasks by viewModel.allTasks.collectAsStateWithLifecycle()
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsStateWithLifecycle()
     val adStats by viewModel.adStats.collectAsStateWithLifecycle()
+    val storeProfile by viewModel.storeProfile.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val pendingTasksCount = allTasks.count { it.status != TaskStatus.COMPLETED }
@@ -180,6 +183,18 @@ fun DashboardScreen(
                         glowColor = Color(0xFFE040FB),
                         secondaryColor = Color(0xFF7C4DFF),
                         onClick = onNavigateToAppointments
+                    )
+                }
+
+                item {
+                    GlowingKpiMetricCard(
+                        title = "متجر GitHub",
+                        value = if (storeProfile.isConnected) "@${storeProfile.username}" else "متجري الرقمي",
+                        subtitle = "$${String.format("%.1f", storeProfile.totalSalesEarned)} مبيعات 🛍️",
+                        icon = Icons.Default.Storefront,
+                        glowColor = Color(0xFF64B5F6),
+                        secondaryColor = Color(0xFF1976D2),
+                        onClick = onNavigateToStore
                     )
                 }
             }

@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "users": {
+      "title": "UserProfile",
+      "description": "User profile with rewards, points, and VIP status",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "rewardPoints": { "type": "integer" },
+        "vipUnlockedUntilMs": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "rewardPoints", "createdAt"]
+    },
+    "tasks": {
+      "title": "TaskItem",
+      "description": "User business tasks",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "priority": { "type": "string" },
+        "status": { "type": "string" },
+        "category": { "type": "string" },
+        "dueDate": { "type": "integer" },
+        "clientOrProject": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "status", "createdAt"]
+    },
+    "appointments": {
+      "title": "Appointment",
+      "description": "User business appointments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "clientName": { "type": "string" },
+        "dateTime": { "type": "integer" },
+        "durationMinutes": { "type": "integer" },
+        "locationOrLink": { "type": "string" },
+        "type": { "type": "string" },
+        "dealValue": { "type": "number" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "clientName", "dateTime", "createdAt"]
+    }
+  }
+}
