@@ -12,16 +12,36 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
-class FirestoreRepository(private val db: FirebaseFirestore) {
+class FirestoreRepository(private val dbProvider: () -> FirebaseFirestore? = {
+    try {
+        FirebaseFirestore.getInstance()
+    } catch (_: Throwable) {
+        null
+    }
+}) {
 
-    constructor(context: Context) : this(
-        FirebaseFirestore.getInstance(
-            context.applicationContext.getString(R.string.firestore_database_id)
-        )
-    )
+    private val db: FirebaseFirestore? get() = dbProvider()
+
+    constructor(context: Context) : this({
+        try {
+            val dbId = context.applicationContext.getString(R.string.firestore_database_id)
+            if (dbId.isNotBlank() && dbId != "default") {
+                FirebaseFirestore.getInstance(dbId)
+            } else {
+                FirebaseFirestore.getInstance()
+            }
+        } catch (_: Throwable) {
+            try {
+                FirebaseFirestore.getInstance()
+            } catch (_: Throwable) {
+                null
+            }
+        }
+    })
 
     fun observeUserProfile(userId: String): Flow<UserProfile?> {
-        return db.collection("users").document(userId)
+        val currentDb = db ?: return kotlinx.coroutines.flow.flowOf(null)
+        return currentDb.collection("users").document(userId)
             .snapshots()
             .map { snapshot ->
                 if (snapshot.exists()) {
@@ -33,8 +53,9 @@ class FirestoreRepository(private val db: FirebaseFirestore) {
     }
 
     suspend fun createOrUpdateProfile(profile: UserProfile) {
+        val currentDb = db ?: return
         try {
-            val userRef = db.collection("users").document(profile.userId)
+            val userRef = currentDb.collection("users").document(profile.userId)
             val data = mapOf(
                 "userId" to profile.userId,
                 "email" to profile.email,
@@ -50,8 +71,9 @@ class FirestoreRepository(private val db: FirebaseFirestore) {
     }
 
     suspend fun syncPointsToCloud(userId: String, points: Long, vipUntilMs: Long) {
+        val currentDb = db ?: return
         try {
-            val userRef = db.collection("users").document(userId)
+            val userRef = currentDb.collection("users").document(userId)
             val data = mapOf(
                 "userId" to userId,
                 "rewardPoints" to points,

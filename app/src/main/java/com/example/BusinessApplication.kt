@@ -34,6 +34,13 @@ class BusinessApplication : Application() {
             defaultHandler?.uncaughtException(thread, throwable)
         }
 
+        // Initialize Firebase safely
+        try {
+            if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
+                com.google.firebase.FirebaseApp.initializeApp(this)
+            }
+        } catch (_: Throwable) {}
+
         // Initialize persistent user rewards and points system
         try {
             AdMobManager.initialize(this)
